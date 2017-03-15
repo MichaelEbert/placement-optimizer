@@ -1,0 +1,95 @@
+	.file	"switchtest.cpp"
+	.section	.text$_Z6printfPKcz,"x"
+	.linkonce discard
+	.p2align 4,,15
+	.globl	_Z6printfPKcz
+	.def	_Z6printfPKcz;	.scl	2;	.type	32;	.endef
+	.seh_proc	_Z6printfPKcz
+_Z6printfPKcz:
+.LFB8:
+	subq	$56, %rsp
+	.seh_stackalloc	56
+	.seh_endprologue
+	movq	%rdx, 72(%rsp)
+	leaq	72(%rsp), %rdx
+	movq	%r8, 80(%rsp)
+	movq	%r9, 88(%rsp)
+	movq	%rdx, 40(%rsp)
+	call	__mingw_vprintf
+	addq	$56, %rsp
+	ret
+	.seh_endproc
+	.def	__main;	.scl	2;	.type	32;	.endef
+	.section .rdata,"dr"
+.LC0:
+	.ascii "zero\0"
+.LC1:
+	.ascii "one\0"
+.LC2:
+	.ascii "two\0"
+.LC3:
+	.ascii "three\0"
+.LC4:
+	.ascii "other\0"
+	.section	.text.startup,"x"
+	.p2align 4,,15
+	.globl	main
+	.def	main;	.scl	2;	.type	32;	.endef
+	.seh_proc	main
+main:
+.LFB33:
+	pushq	%rsi
+	.seh_pushreg	%rsi
+	pushq	%rbx
+	.seh_pushreg	%rbx
+	subq	$56, %rsp
+	.seh_stackalloc	56
+	.seh_endprologue
+	xorl	%ebx, %ebx
+	leaq	32(%rsp), %rsi
+	call	__main
+	movl	$0, 32(%rsp)
+	movl	$2, 36(%rsp)
+	movl	$3, 40(%rsp)
+.L10:
+	movl	(%rsi,%rbx), %eax
+	cmpl	$1, %eax
+	je	.L4
+	jle	.L13
+	cmpl	$2, %eax
+	je	.L7
+	cmpl	$3, %eax
+	jne	.L3
+	leaq	.LC3(%rip), %rcx
+	call	_Z6printfPKcz
+.L9:
+	addq	$4, %rbx
+	cmpq	$12, %rbx
+	jne	.L10
+	xorl	%eax, %eax
+	addq	$56, %rsp
+	popq	%rbx
+	popq	%rsi
+	ret
+	.p2align 4,,10
+.L13:
+	testl	%eax, %eax
+	jne	.L3
+	leaq	.LC0(%rip), %rcx
+	call	_Z6printfPKcz
+	jmp	.L9
+.L4:
+	leaq	.LC1(%rip), %rcx
+	call	_Z6printfPKcz
+	jmp	.L9
+.L3:
+	leaq	.LC4(%rip), %rcx
+	call	_Z6printfPKcz
+	jmp	.L9
+.L7:
+	leaq	.LC2(%rip), %rcx
+	call	_Z6printfPKcz
+	jmp	.L9
+	.seh_endproc
+	.ident	"GCC: (tdm64-1) 4.9.2"
+	.def	__mingw_vprintf;	.scl	2;	.type	32;	.endef
