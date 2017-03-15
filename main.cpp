@@ -6,10 +6,9 @@
 #include <vector>
 #include <algorithm>
 #include <float.h>
-#include <stdio.h>
 #include <stdint.h>
 
-#include "types.hpp"
+#include "components.hpp"
 #include "gridManip.hpp"
 
 //treat all non-integers as whitespace
@@ -32,13 +31,13 @@ int width = 0;
 int height = 0;
 
 
-int printMatrix(cell* matrix);
+int printMatrix(cell* matrix) noexcept;
 int calcEfficiency(std::vector<std::vector<int>> matrix);
 
 constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, GRID_SIZE);
 
 //fix resGrid to be double pointer or someithng.
-void sim(grid typeGrid, cell resGrid[][GRID_SIZE]){
+void sim(grid typeGrid, cell resGrid[][GRID_SIZE]) noexcept{
 	memset(resGrid, 0, GRID_SIZE*NUM_RESOURCE_TYPES);
 	setup_grid(typeGrid, GRID_SIZE);
 	return;
@@ -91,7 +90,8 @@ array positions:
 [ ][ ][ ][ ][ ][ ][ ]
 */
 
-int printMatrix(cell* matrix)
+//todo: template to size of matrix?
+int printMatrix(cell* matrix) noexcept
 {
 	char toPrint = 'x';
 	for(int i = 0; i < GRID_Y_SIZE; i++){
