@@ -1,5 +1,6 @@
 //reactor placement brute-force
 //input text file with 1s where you can place, 0s where you can't
+
 #include <fstream>
 #include <iostream>
 #include <cstdio>
@@ -8,8 +9,13 @@
 #include <float.h>
 #include <stdint.h>
 
-#include "components.hpp"
-#include "gridManip.hpp"
+/*
+include order:
+types.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->main.cpp
+
+*/
+
+#include "gridManip_after.hpp"
 
 //treat all non-integers as whitespace
 struct integer_only : std::ctype<char>
@@ -36,10 +42,11 @@ int calcEfficiency(std::vector<std::vector<int>> matrix);
 
 constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, GRID_SIZE);
 
-//fix resGrid to be double pointer or someithng.
-void sim(grid typeGrid, cell resGrid[][GRID_SIZE]) noexcept{
-	memset(resGrid, 0, GRID_SIZE*NUM_RESOURCE_TYPES);
-	setup_grid(typeGrid, GRID_SIZE);
+//TODO unhardode locals_grid? NOPE goin all in on local vars
+void sim() noexcept{
+	clearNonTypeGrids();
+	setup_grid(type_g, GRID_SIZE);
+	run_grid(type_g, GRID_SIZE);
 	return;
 }
 
@@ -48,20 +55,20 @@ int main(int argc, char** argv)
 	cell bestGrid[GRID_SIZE];
 	int bestSoFar = 0;
 	int bestHeat = 0;
-	memset(type_grid, 0, GRID_SIZE);
-	printf("iterations: %u (expected time %2f seconds)\n",brute_force_iterations,brute_force_iterations/2000000.0f);
+	memset(type_g, 0, GRID_SIZE);
+	printf("iterations: %u (expected time %2f seconds +- 50%%)\n",brute_force_iterations,brute_force_iterations/4000000.0f);
 	for(unsigned long i = 0; i < brute_force_iterations; i++){
-		increment_grid(type_grid, GRID_SIZE);
-		sim(type_grid,resource_grid);
-		int thisSum = sum_grid(resource_grid[RES_ENERGY_ID], GRID_SIZE, RES_ENERGY_ID);
-		int heatSum = sum_grid(resource_grid[RES_HEAT_ID], GRID_SIZE, RES_HEAT_ID);
-//		printf("\n\nsum is %d, heat is %d\n",thisSum,heatSum);
-//		printMatrix(type_grid);
-//printf("iteration %u\n",i);
+		increment_grid(type_g, GRID_SIZE);
+		sim();
+		int thisSum = sum_grid(energy_g, GRID_SIZE, RES_ENERGY_ID);
+		int heatSum = sum_grid(heat_g, GRID_SIZE, RES_HEAT_ID);
+//		printf("sum is %d, heat is %d\n",thisSum,heatSum);
+//		printMatrix(type_g);
+//printf("iteration %u\n\n",i);
 		if(thisSum > bestSoFar && heatSum <= 0){
 			bestSoFar = thisSum;
 			bestHeat = heatSum;
-			memcpy(bestGrid,type_grid,GRID_SIZE*sizeof(cell));
+			memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
 		}
 		
 		
@@ -117,6 +124,7 @@ int printMatrix(cell* matrix) noexcept
 		}
 		printf("\n");
 	}
+	return 0;
 }
 
 //void applyEffect(Effect& eff, Map& matrix, int curX, int curY){

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdio>
+#include "gridManip.hpp"
 //types.h - component types
 
 
@@ -7,28 +8,27 @@
 //this won't work for real- 4 types 20 slots in 1 hour requires 300M tests/sec.
 //no premature optimization! just do everything serial right now.
 //but as a start, it'll work.
-const short NUM_COMPONENT_TYPES = 4;
-const short NUM_RESOURCE_TYPES = 2;
-const short GRID_X_SIZE = 5;
-const short GRID_Y_SIZE = 3;
 
-const int GRID_SIZE = GRID_X_SIZE*GRID_Y_SIZE;
-typedef unsigned char cell;
-typedef cell* grid;
-typedef unsigned int gsize_t;
-typedef signed long goffset_t;//max offset = entire grid.
 
-inline void sumAdjacentComponents(cell* thisCell, gsize_t x, gsize_t y, unsigned char* adjComponents) noexcept;
-inline gsize_t cell_linear_offset(gsize_t x, gsize_t y) noexcept;
 //switch between component setups with functor array, populated by fctr_arr[COMP_TYPE_ID] = COMP_TYPE::fctr;
 
 //best is probably to only write to your cell if possible. more parallel that way.
+//reserve space
 
-static cell type_grid[GRID_SIZE];
-static cell resource_grid[NUM_RESOURCE_TYPES][GRID_SIZE];
+//can I do thread_local without having to do pthread locks?
+static cell type_g[GRID_SIZE];
+static uint8_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+static res_cell energy_g[GRID_SIZE];
+static res_cell heat_g[GRID_SIZE];
+static cell_properties properties_g[GRID_SIZE];
+static res_cell locala_g[GRID_SIZE];
 
-//setup function type: cell* thisCell,gsize_t thisX,gsize_t thisY -> void
-typedef const void (*setup_func_t)(cell*,gsize_t,gsize_t);
+/*
+want: a grid type that I can use interchangably, regardless of teh size of the cells.
+-templates or passing around array size
+*/
+
+//another function for 
 
 //for REACTOR
 //types:
@@ -47,17 +47,24 @@ enum resource_ids{
 	RES_ENERGY_ID,
 	RES_HEAT_ID
 };
-
+//NEXT TO DO: replace cell* thisCell with a cell offset - can just go types[offset] to get this cell as variables are global.
 class Component{
 public:
-	static const void component_setup(cell* thisCell, gsize_t x, gsize_t y) noexcept{
+	static const bool acceptsHeat = true;
+	static const void component_setup(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+		sumAdjacentComponents(thisCell);
+		properties_g[thisCell].acceptsHeat = acceptsHeat;
 		return;
 	}
+	static const void component_action(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+		return;
+	}
+	
 };
 
 class None : public Component{
 	public:
-		static const void component_setup(cell* thisCell, gsize_t x, gsize_t y) noexcept{
+		static const void component_setup(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
 			return;
 		}
 };
@@ -70,12 +77,12 @@ public:
 class HeatSink: public Component{
 public:
 	static const signed int HEATSINK_HEAT_START = -5;
-	static const void component_setup(cell* thisCell, gsize_t x, gsize_t y) noexcept{
-		unsigned char adjComponents[NUM_COMPONENT_TYPES];
-		sumAdjacentComponents(thisCell, x, y, adjComponents);
-		resource_grid[RES_HEAT_ID][cell_linear_offset(x,y)] = -1;
+	static const void component_action(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+		heat_g[thisCell] = -5;
+		return;
 	}
 };
+
 
 class Reactor: public Component{
 	public:
@@ -89,25 +96,34 @@ class Reactor: public Component{
 //	}
 //	adjEffect<T::acceptsHeat,variables::adjComponents,operator+>
 	
-	static const void component_setup(cell* thisCell, gsize_t x, gsize_t y) noexcept{
-		unsigned char adjComponents[NUM_COMPONENT_TYPES];
-		sumAdjacentComponents(thisCell, x, y, adjComponents);
-		resource_grid[RES_ENERGY_ID][cell_linear_offset(x,y)] = adjComponents[REACTOR_ID] + 1;
-		resource_grid[RES_HEAT_ID][cell_linear_offset(x,y)] = adjComponents[REACTOR_ID] + 1;
-		//*thisCell=adjComponents[REACTOR_ID] + 1;//ticks
-		//this->adjComponents=adjComponents[HEATSINK_ID] + adjComponents[SPREADER_ID];
+	static const void component_setup(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+		Component::component_setup(thisCell,x,y);
+		//locala_g[lin(x,y)] = sum_adjacent_with_property(thisCell,x,y,acceptsHeat)
+		
+	}
+	static const void component_action(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+		auto numReactors = (adjacency_sg+(thisCell*NUM_COMPONENT_TYPES))[REACTOR_ID]+1;
+		energy_g[thisCell] = numReactors;
+		heat_g[thisCell] = numReactors*numReactors;
+		return;
 	}
 };
 
 //setup array
 
-setup_func_t component_setup_arr[] = {
+component_func_t component_setup_arr[] = {
 	None::component_setup,
 	Reactor::component_setup,
 	HeatSink::component_setup,
 	Spreader::component_setup	
 };
 
+component_func_t component_action_arr[] = {
+	None::component_action,
+	Reactor::component_action,
+	HeatSink::component_action,
+	Spreader::component_action	
+};
 
 template <typename T,size_t N>
 constexpr size_t array_size(T(&)[N]){
