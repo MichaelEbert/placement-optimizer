@@ -16,7 +16,6 @@
 //reserve space
 
 //can I do thread_local without having to do pthread locks?
-static cell type_g[GRID_SIZE];
 static uint8_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
 static res_cell energy_g[GRID_SIZE];
 static res_cell heat_g[GRID_SIZE];
@@ -51,12 +50,12 @@ enum resource_ids{
 class Component{
 public:
 	static const bool acceptsHeat = true;
-	static const void component_setup(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
-		sumAdjacentComponents(thisCell);
+	static const void component_setup(gsize_t thisCell, grid typegrid) noexcept{
+		sumAdjacentComponents(thisCell, typegrid);
 		properties_g[thisCell].acceptsHeat = acceptsHeat;
 		return;
 	}
-	static const void component_action(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+	static const void component_action(gsize_t thisCell, grid typegrid) noexcept{
 		return;
 	}
 	
@@ -64,7 +63,7 @@ public:
 
 class None : public Component{
 	public:
-		static const void component_setup(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+		static const void component_setup(gsize_t thisCell, grid typegrid) noexcept{
 			return;
 		}
 };
@@ -77,7 +76,7 @@ public:
 class HeatSink: public Component{
 public:
 	static const signed int HEATSINK_HEAT_START = -5;
-	static const void component_action(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+	static const void component_action(gsize_t thisCell, grid typegrid) noexcept{
 		heat_g[thisCell] = -5;
 		return;
 	}
@@ -96,12 +95,12 @@ class Reactor: public Component{
 //	}
 //	adjEffect<T::acceptsHeat,variables::adjComponents,operator+>
 	
-	static const void component_setup(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
-		Component::component_setup(thisCell,x,y);
+	static const void component_setup(gsize_t thisCell, grid typegrid) noexcept{
+		Component::component_setup(thisCell,typegrid);
 		//locala_g[lin(x,y)] = sum_adjacent_with_property(thisCell,x,y,acceptsHeat)
 		
 	}
-	static const void component_action(gsize_t thisCell, gsize_t x, gsize_t y) noexcept{
+	static const void component_action(gsize_t thisCell, grid typegrid) noexcept{
 		auto numReactors = (adjacency_sg+(thisCell*NUM_COMPONENT_TYPES))[REACTOR_ID]+1;
 		energy_g[thisCell] = numReactors;
 		heat_g[thisCell] = numReactors*numReactors;
@@ -130,7 +129,17 @@ constexpr size_t array_size(T(&)[N]){
 	return N;
 }
 
-
+//return the score of the current grid. undefined if called before sim();
+//modify this to change the goal of the program.
+result_t scoreCurrentGrid() noexcept{
+		res_cell heatSum = sum_grid<>(heat_g, GRID_SIZE);
+		if(heatSum > 0){
+			return -static_cast<result_t>(heatSum);
+		}
+		int thisSum = sum_grid(energy_g, GRID_SIZE);
+		return static_cast<result_t>(thisSum);
+}
+	
 
 //generic
 

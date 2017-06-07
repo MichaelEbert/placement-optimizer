@@ -42,13 +42,29 @@ inline gsize_t cell_linear_offset(gsize_t x,gsize_t y) noexcept{
 inline cell* cell_neighbor(cell* thisCell, goffset_t deltaX, goffset_t deltaY) noexcept{
 	return thisCell + cell_XOffset(deltaX) + cell_YOffset(deltaY, GRID_X_SIZE);
 }
-	
 
-int sum_grid(grid grid, gsize_t gridSize,  unsigned int resource) noexcept;
+//sums the resources of type RESOURCE for grid GRID
+//TODO: ensure gridSize is size of grid
+template<typename C>
+C sum_grid(C* grid, gsize_t gridSize) noexcept{
+	C total = 0;
+	//cell* resGrid = grid+(gridSize * resource);
+	for(gsize_t i = 0; i < gridSize; i++){
+		total+= (grid[i]);
+	}
+	return total;
+}
+
+
 int setup_grid(grid typegrid, gsize_t gridSize) noexcept;
 int run_grid(grid typegrid, gsize_t gridSize) noexcept;
-void increment_grid(grid grid, gsize_t gridSize) noexcept;
-void sumAdjacentComponents(gsize_t thisCell) noexcept;
-void clearNonTypeGrids() noexcept;
+
+void sumAdjacentComponents(gsize_t thisCell,grid typegrid) noexcept;
+
+void increment_grid(grid grid, gsize_t gridSize) noexcept;//increment grid. used for brute force search.
+
+void sim(grid typegrid) noexcept;//sim the grid typegrid 
+result_t scoreCurrentGrid() noexcept;//score the current grid. should not be called before sim().
+
 
 

@@ -11,11 +11,13 @@
 
 /*
 include order:
-types.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->main.cpp
+types.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->genetic_types.hpp->genetic.hpp->main.cpp
 
 */
 
-#include "gridManip_after.hpp"
+//#include "gridManip_after.hpp"
+#include "genetic.hpp"
+
 
 //treat all non-integers as whitespace
 struct integer_only : std::ctype<char>
@@ -40,14 +42,16 @@ int height = 0;
 int printMatrix(cell* matrix) noexcept;
 int calcEfficiency(std::vector<std::vector<int>> matrix);
 
-constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, GRID_SIZE);
 
-//TODO unhardode locals_grid? NOPE goin all in on local vars
-void sim() noexcept{
-	clearNonTypeGrids();
-	setup_grid(type_g, GRID_SIZE);
-	run_grid(type_g, GRID_SIZE);
-	return;
+//constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, GRID_SIZE);
+static cell type_g[GRID_SIZE];
+
+
+void printResultsToFile(int topa,int topb,int topc,char* filename){
+	auto file = fopen(filename,"ab");
+	//format: top 3 scores, popsize, generations, mutation chance, top parent reserved slots
+	fprintf(file, "%d,%d,%d,%d,%d,%f,%d\n",topa,topb,topc,POP_SIZE,NUM_GENERATIONS,MUTATION_CHANCE*100,TOP_PARENTS_RESERVED_SLOTS);
+	fclose(file);
 }
 
 int main(int argc, char** argv)
@@ -56,26 +60,54 @@ int main(int argc, char** argv)
 	int bestSoFar = 0;
 	int bestHeat = 0;
 	memset(type_g, 0, GRID_SIZE);
-	printf("iterations: %u (expected time %2f seconds +- 50%%)\n",brute_force_iterations,brute_force_iterations/4000000.0f);
-	for(unsigned long i = 0; i < brute_force_iterations; i++){
-		increment_grid(type_g, GRID_SIZE);
-		sim();
-		int thisSum = sum_grid(energy_g, GRID_SIZE, RES_ENERGY_ID);
-		int heatSum = sum_grid(heat_g, GRID_SIZE, RES_HEAT_ID);
-//		printf("sum is %d, heat is %d\n",thisSum,heatSum);
-//		printMatrix(type_g);
-//printf("iteration %u\n\n",i);
-		if(thisSum > bestSoFar && heatSum <= 0){
-			bestSoFar = thisSum;
-			bestHeat = heatSum;
-			memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
+	printf("doing %u generations of %u size for a total of AT LEAST %u iterations, expecting to take over %2f seconds\n",NUM_GENERATIONS,POP_SIZE,POP_SIZE*NUM_GENERATIONS,POP_SIZE*NUM_GENERATIONS/4000000.0f);
+//	printf("iterations: %u (expected time %2f seconds +- 50%%)\n",brute_force_iterations,brute_force_iterations/4000000.0f);
+//	for(unsigned long i = 0; i < brute_force_iterations; i++){
+//		increment_grid(type_g, GRID_SIZE);
+//		sim(type_g);
+//		int thisSum = scoreCurrentGrid();
+//
+////		printf("sum is %d, heat is %d\n",thisSum,heatSum);
+////		printMatrix(type_g);
+////printf("iteration %u\n\n",i);
+//		if(thisSum > bestSoFar){
+//			bestSoFar = thisSum;
+//			//bestHeat = heatSum;
+//			memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
+//		}
+//		
+//		
+//	}
+//	printf("optimal result is %d\n",bestSoFar);
+//	printMatrix(bestGrid);
+//-----genetic algorithm-----
+//look up pruning genetic algorithm - heuristic
+
+	seed();
+	for(int i = 0; i < NUM_GENERATIONS; i++){
+		evaluate();
+		reproduce();
+		//count simulations
+		if(count_sims_low > ONE_BILLION){
+			count_sims_low-=ONE_BILLION;
+			count_sims_high++;
 		}
-		
-		
 	}
-	printf("\nbest value is %d\n",bestSoFar);
-	printf("with heat value %d\n",bestHeat);
-	printMatrix(bestGrid);
+	printf("total sims: %d,%03d,%03d,%03d\n",
+	count_sims_high,
+	(count_sims_low/1000000)%1000,
+	(count_sims_low/1000)%1000,
+	count_sims_low%1000);
+	
+	printf("top 3 are\n");
+	for(int i = 0; i < 3; i++){
+		bestSoFar = popRankings[i].result;
+		memcpy(bestGrid,candidates+(popRankings[i].index*GRID_SIZE),GRID_SIZE*sizeof(cell));
+		printf("\nbest value is %d\n",bestSoFar);
+		//printf("with heat value %d\n",bestHeat);
+		printMatrix(bestGrid);
+	}
+	printResultsToFile(popRankings[0].result,popRankings[1].result,popRankings[2].result,"geneticResults.csv");
 	
 //	cell tmp_arr[] = {REACTOR_ID,REACTOR_ID,REACTOR_ID,
 //					REACTOR_ID,REACTOR_ID,REACTOR_ID,
