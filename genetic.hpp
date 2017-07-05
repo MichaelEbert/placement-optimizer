@@ -47,13 +47,14 @@ void evaluate(){
 		grid curCandidate = candidates+(i*GRID_SIZE);
 		
 		function_args locals_test;
+		locals_test.thisCell = 0;
 		locals_test.typegrid = curCandidate;
 		locals_test.adjacency_sg = adjacency1_sg;
 		locals_test.energy_g = energy1_g;
 		locals_test.heat_g = heat1_g;
 		locals_test.properties_g = properties1_g;
 		
-		//sim(locals_test);
+		sim(locals_test);
 		popRankings[i].index = i;
 		popRankings[i].result = scoreCurrentGrid();
 	}
