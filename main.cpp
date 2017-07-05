@@ -18,7 +18,7 @@ types.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->genetic_types.hpp
 
 //#include "gridManip_after.hpp"
 #include "genetic.hpp"
-const static int NUM_THREADS = NUM_COMPONENT_TYPES;
+const static int NUM_THREADS = 1;
 
 int printMatrix(cell* matrix) noexcept;
 int calcEfficiency(std::vector<std::vector<int>> matrix);

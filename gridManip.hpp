@@ -56,10 +56,10 @@ C sum_grid(C* grid, gsize_t gridSize) noexcept{
 }
 
 
-int setup_grid(grid typegrid, gsize_t gridSize) noexcept;
+int setup_grid(function_args& tlocals) noexcept;
 int run_grid(grid typegrid, gsize_t gridSize) noexcept;
 
-void sumAdjacentComponents(gsize_t thisCell,grid typegrid) noexcept;
+void sumAdjacentComponents(function_args& tlocals) noexcept;
 
 void increment_grid(grid grid, gsize_t gridSize) noexcept;//increment grid. used for brute force search.
 

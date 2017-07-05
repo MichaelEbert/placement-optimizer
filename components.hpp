@@ -15,15 +15,15 @@
 //best is probably to only write to your cell if possible. more parallel that way.
 //reserve space
 
-//can I do thread_local without having to do pthread locks?
-thread_local static uint8_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
-thread_local static res_cell energy_g[GRID_SIZE];
-thread_local static res_cell heat_g[GRID_SIZE];
-thread_local static cell_properties properties_g[GRID_SIZE];
-thread_local static res_cell locala_g[GRID_SIZE];
+//need to pass these in as vars :(
+static adjacency_t adjacency1_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+static res_cell energy1_g[GRID_SIZE];
+static res_cell heat1_g[GRID_SIZE];
+static res_cell locala1_g[GRID_SIZE];
+static cell_properties properties1_g[GRID_SIZE];
+function_args tlocal_test{0,nullptr,adjacency1_sg,properties1_g,energy1_g,heat1_g};
 
-/*
-want: a grid type that I can use interchangably, regardless of teh size of the cells.
+/*want: a grid type that I can use interchangably, regardless of teh size of the cells.
 -templates or passing around array size
 */
 
@@ -47,15 +47,16 @@ enum resource_ids{
 	RES_HEAT_ID
 };
 //NEXT TO DO: replace cell* thisCell with a cell offset - can just go types[offset] to get this cell as variables are global.
+//template so that we can use exactly the arguments we want?
 class Component{
 public:
 	static const bool acceptsHeat = true;
-	static const void component_setup(gsize_t thisCell, grid typegrid) noexcept{
-		sumAdjacentComponents(thisCell, typegrid);
-		properties_g[thisCell].acceptsHeat = acceptsHeat;
+	static const void component_setup(function_args& tlocals) noexcept{
+		sumAdjacentComponents(tlocals);
+		(tlocals.properties_g)[tlocals.thisCell].acceptsHeat = acceptsHeat;
 		return;
 	}
-	static const void component_action(gsize_t thisCell, grid typegrid) noexcept{
+	static const void component_action(function_args& tlocals) noexcept{
 		return;
 	}
 	
@@ -63,7 +64,7 @@ public:
 
 class None : public Component{
 	public:
-		static const void component_setup(gsize_t thisCell, grid typegrid) noexcept{
+		static const void component_setup(function_args& tlocals) noexcept{
 			return;
 		}
 };
@@ -76,8 +77,8 @@ public:
 class HeatSink: public Component{
 public:
 	static const signed int HEATSINK_HEAT_START = -5;
-	static const void component_action(gsize_t thisCell, grid typegrid) noexcept{
-		heat_g[thisCell] = -5;
+	static const void component_action(function_args& tlocals) noexcept{
+		tlocals.heat_g[tlocals.thisCell] = -5;
 		return;
 	}
 };
@@ -95,15 +96,16 @@ class Reactor: public Component{
 //	}
 //	adjEffect<T::acceptsHeat,variables::adjComponents,operator+>
 	
-	static const void component_setup(gsize_t thisCell, grid typegrid) noexcept{
-		Component::component_setup(thisCell,typegrid);
+	static const void component_setup(function_args& tlocals) noexcept{
+		Component::component_setup(tlocals);
 		//locala_g[lin(x,y)] = sum_adjacent_with_property(thisCell,x,y,acceptsHeat)
 		
 	}
-	static const void component_action(gsize_t thisCell, grid typegrid) noexcept{
-		auto numReactors = (adjacency_sg+(thisCell*NUM_COMPONENT_TYPES))[REACTOR_ID]+1;
-		energy_g[thisCell] = numReactors;
-		heat_g[thisCell] = numReactors*numReactors;
+	static const void component_action(function_args& tlocals) noexcept{
+		adjacency_t* this_adjacency = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
+		auto numReactors = this_adjacency[REACTOR_ID]+1;
+		tlocals.energy_g[tlocals.thisCell] = numReactors;
+		tlocals.heat_g[tlocals.thisCell] = numReactors*numReactors;
 		return;
 	}
 };
@@ -132,11 +134,11 @@ constexpr size_t array_size(T(&)[N]){
 //return the score of the current grid. undefined if called before sim();
 //modify this to change the goal of the program.
 result_t scoreCurrentGrid() noexcept{
-		res_cell heatSum = sum_grid<>(heat_g, GRID_SIZE);
+		res_cell heatSum = sum_grid<>(heat1_g, GRID_SIZE);
 		if(heatSum > 0){
 			return -static_cast<result_t>(heatSum);
 		}
-		int thisSum = sum_grid(energy_g, GRID_SIZE);
+		int thisSum = sum_grid(energy1_g, GRID_SIZE);
 		return static_cast<result_t>(thisSum);
 }
 	
