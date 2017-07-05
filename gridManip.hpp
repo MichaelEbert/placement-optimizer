@@ -56,14 +56,14 @@ C sum_grid(C* grid, gsize_t gridSize) noexcept{
 }
 
 
-int setup_grid(function_args& tlocals) noexcept;
-int run_grid(function_args& tlocals) noexcept;
+int setup_grid(grid typegrid) noexcept;
+int run_grid(grid typegrid) noexcept;
 
-void sumAdjacentComponents(function_args& tlocals) noexcept;
+void sumAdjacentComponents(gsize_t thisCell, grid typegrid) noexcept;
 
-void increment_grid(function_args& tlocals) noexcept;//increment grid. used for brute force search.
+void increment_grid(grid typegrid) noexcept;//increment grid. used for brute force search.
 
-void sim(function_args& tlocals) noexcept;//sim the grid typegrid 
+void sim(grid typegrid) noexcept;//sim the grid typegrid 
 result_t scoreCurrentGrid() noexcept;//score the current grid. should not be called before sim().
 
 

@@ -28,8 +28,8 @@ Folders=
 IncludeVersionInfo=0
 SupportXPThemes=0
 CompilerSet=0
-CompilerSettings=00000fc0g0000000000000000
-UnitCount=9
+CompilerSettings=00000000g0000000000000000
+UnitCount=8
 
 [VersionInfo]
 Major=1
@@ -70,28 +70,9 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit3]
-FileName=components.cpp
-CompileCpp=1
-Folder=
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
 [Unit4]
-FileName=components.hpp
-CompileCpp=1
-Folder=
-Compile=1
-Link=1
-Priority=1000
-OverrideBuildCmd=0
-BuildCmd=
-
-[Unit5]
 FileName=readme.txt
+CompileCpp=1
 Folder=
 Compile=0
 Link=0
@@ -99,17 +80,17 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit6]
+[Unit5]
 FileName=types.hpp
-CompileCpp=1
 Folder=
 Compile=1
 Link=1
 Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
+CompileCpp=1
 
-[Unit7]
+[Unit6]
 FileName=gridManip_after.hpp
 CompileCpp=1
 Folder=
@@ -119,8 +100,18 @@ Priority=1000
 OverrideBuildCmd=0
 BuildCmd=
 
-[Unit8]
+[Unit7]
 FileName=genetic.hpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit8]
+FileName=genetic_types.hpp
 CompileCpp=1
 Folder=
 Compile=1
@@ -131,6 +122,16 @@ BuildCmd=
 
 [Unit9]
 FileName=genetic_types.hpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit3]
+FileName=components.hpp
 CompileCpp=1
 Folder=
 Compile=1

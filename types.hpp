@@ -34,7 +34,6 @@ typedef struct {
 //FUNCTION TYPES
 //this struct contains thread local vars
 typedef struct{
-	gsize_t thisCell;
 	grid typegrid;
 	adjacency_t* adjacency_sg;
 	cell_properties* properties_g;
@@ -44,7 +43,7 @@ typedef struct{
 
 //most functions should take in all variables for use... huh. think about inlining more maybe?
 //function example declaration: func(gsize_t thisCell, grid typegrid, adjacency_t* adjacency_sg)
-typedef const void (*component_func_t)(function_args&);
+typedef const void (*component_func_t)(gsize_t, grid);
 
 
 
