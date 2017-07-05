@@ -8,6 +8,7 @@
 #include <algorithm>
 #include <float.h>
 #include <stdint.h>
+#include <thread>
 
 /*
 include order:
@@ -17,35 +18,13 @@ types.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->genetic_types.hpp
 
 //#include "gridManip_after.hpp"
 #include "genetic.hpp"
-
-
-//treat all non-integers as whitespace
-struct integer_only : std::ctype<char>
-{
-	integer_only() : std::ctype<char>(get_table()) {}
-
-	static std::ctype_base::mask const* get_table()
-	{
-		static std::vector<std::ctype_base::mask>
-			rc(std::ctype<char>::table_size, std::ctype_base::space);
-
-		std::fill(&rc['0'], &rc['9' + 1], std::ctype_base::digit);
-		return &rc[0];
-	}
-};
-
-
-int width = 0;
-int height = 0;
-
+const static int NUM_THREADS = NUM_COMPONENT_TYPES;
 
 int printMatrix(cell* matrix) noexcept;
 int calcEfficiency(std::vector<std::vector<int>> matrix);
 
 
-//constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, GRID_SIZE);
-static cell type_g[GRID_SIZE];
-
+constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, (GRID_SIZE-0));
 
 void printResultsToFile(int topa,int topb,int topc,char* filename){
 	auto file = fopen(filename,"ab");
@@ -54,32 +33,54 @@ void printResultsToFile(int topa,int topb,int topc,char* filename){
 	fclose(file);
 }
 
+cell* allthreads_bestGrid[NUM_THREADS];
+int allthreads_bestScore[NUM_THREADS];
+
+void bruteForce(int threadnum){
+	cell bestGrid[GRID_SIZE];
+	cell type_g[GRID_SIZE];
+	int bestSoFar = 0;
+	memset(type_g, 0, GRID_SIZE);
+	type_g[GRID_SIZE-1] = threadnum;
+	for(unsigned long i = 0; i < brute_force_iterations; i++){
+		increment_grid(type_g, GRID_SIZE);
+		sim(type_g);
+		int thisSum = scoreCurrentGrid();
+		if(thisSum > bestSoFar){
+			bestSoFar = thisSum;
+			//bestHeat = heatSum;
+			memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
+		}
+	}
+	memcpy(allthreads_bestGrid[threadnum], bestGrid, GRID_SIZE*sizeof(cell));
+	allthreads_bestScore[threadnum] = bestSoFar;
+}
+	
+	
+
 int main(int argc, char** argv)
 {
 	cell bestGrid[GRID_SIZE];
 	int bestSoFar = 0;
 	int bestHeat = 0;
-	memset(type_g, 0, GRID_SIZE);
 	printf("doing %u generations of %u size for a total of AT LEAST %u iterations, expecting to take over %2f seconds\n",NUM_GENERATIONS,POP_SIZE,POP_SIZE*NUM_GENERATIONS,POP_SIZE*NUM_GENERATIONS/4000000.0f);
-//	printf("iterations: %u (expected time %2f seconds +- 50%%)\n",brute_force_iterations,brute_force_iterations/4000000.0f);
-//	for(unsigned long i = 0; i < brute_force_iterations; i++){
-//		increment_grid(type_g, GRID_SIZE);
-//		sim(type_g);
-//		int thisSum = scoreCurrentGrid();
-//
-////		printf("sum is %d, heat is %d\n",thisSum,heatSum);
-////		printMatrix(type_g);
-////printf("iteration %u\n\n",i);
-//		if(thisSum > bestSoFar){
-//			bestSoFar = thisSum;
-//			//bestHeat = heatSum;
-//			memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
-//		}
-//		
-//		
-//	}
-//	printf("optimal result is %d\n",bestSoFar);
-//	printMatrix(bestGrid);
+	for(int i = 0; i < NUM_THREADS; i++){
+		allthreads_bestGrid[i] = (cell*)malloc(sizeof(cell)*GRID_SIZE);
+	}
+	printf("iterations: %u (expected time %2f seconds +- 50%%)\n",brute_force_iterations,brute_force_iterations/4000000.0f);
+	bruteForce(0);
+//	std::thread t0 (bruteForce,0);
+//	std::thread t1 (bruteForce,1);
+//	std::thread t2 (bruteForce,2);
+//	std::thread t3 (bruteForce,3);
+//	t0.join();
+//	t1.join();
+//	t2.join();
+//	t3.join();
+//	printf("optimal result is %d\n",*std::max_element(std::begin(allthreads_bestScore),std::end(allthreads_bestScore)));
+//	printMatrix(allthreads_bestGrid[0]);
+	printf("optimal is %d\n",allthreads_bestScore[0]);
+	return 0;
 //-----genetic algorithm-----
 //look up pruning genetic algorithm - heuristic
 

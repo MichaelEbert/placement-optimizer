@@ -16,11 +16,11 @@
 //reserve space
 
 //can I do thread_local without having to do pthread locks?
-static uint8_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
-static res_cell energy_g[GRID_SIZE];
-static res_cell heat_g[GRID_SIZE];
-static cell_properties properties_g[GRID_SIZE];
-static res_cell locala_g[GRID_SIZE];
+thread_local static uint8_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+thread_local static res_cell energy_g[GRID_SIZE];
+thread_local static res_cell heat_g[GRID_SIZE];
+thread_local static cell_properties properties_g[GRID_SIZE];
+thread_local static res_cell locala_g[GRID_SIZE];
 
 /*
 want: a grid type that I can use interchangably, regardless of teh size of the cells.
@@ -110,14 +110,14 @@ class Reactor: public Component{
 
 //setup array
 
-component_func_t component_setup_arr[] = {
+const component_func_t component_setup_arr[] = {
 	None::component_setup,
 	Reactor::component_setup,
 	HeatSink::component_setup,
 	Spreader::component_setup	
 };
 
-component_func_t component_action_arr[] = {
+const component_func_t component_action_arr[] = {
 	None::component_action,
 	Reactor::component_action,
 	HeatSink::component_action,
