@@ -40,8 +40,7 @@ void bruteForce(int threadnum){
 	cell bestGrid[GRID_SIZE];
 	cell type_g[GRID_SIZE];
 	
-	function_args locals_test;
-	locals_test.thisCell = 0;
+	thread_grids locals_test;
 	locals_test.typegrid = type_g;
 	locals_test.adjacency_sg = adjacency1_sg;
 	locals_test.energy_g = energy1_g;

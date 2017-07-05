@@ -46,8 +46,7 @@ void evaluate(){
 	for(unsigned int i = 0; i < POP_SIZE; i++){
 		grid curCandidate = candidates+(i*GRID_SIZE);
 		
-		function_args locals_test;
-		locals_test.thisCell = 0;
+		thread_grids locals_test;
 		locals_test.typegrid = curCandidate;
 		locals_test.adjacency_sg = adjacency1_sg;
 		locals_test.energy_g = energy1_g;
