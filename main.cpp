@@ -39,12 +39,21 @@ int allthreads_bestScore[NUM_THREADS];
 void bruteForce(int threadnum){
 	cell bestGrid[GRID_SIZE];
 	cell type_g[GRID_SIZE];
+	
+	function_args locals_test;
+	locals_test.thisCell = 0;
+	locals_test.typegrid = type_g;
+	locals_test.adjacency_sg = adjacency1_sg;
+	locals_test.energy_g = energy1_g;
+	locals_test.heat_g = heat1_g;
+	locals_test.properties_g = properties1_g;
+	
 	int bestSoFar = 0;
 	memset(type_g, 0, GRID_SIZE);
 	type_g[GRID_SIZE-1] = threadnum;
 	for(unsigned long i = 0; i < brute_force_iterations; i++){
-		increment_grid(type_g, GRID_SIZE);
-		sim(type_g);
+		increment_grid(locals_test);
+		sim(locals_test);
 		int thisSum = scoreCurrentGrid();
 		if(thisSum > bestSoFar){
 			bestSoFar = thisSum;

@@ -45,7 +45,16 @@ void seed(){
 void evaluate(){
 	for(unsigned int i = 0; i < POP_SIZE; i++){
 		grid curCandidate = candidates+(i*GRID_SIZE);
-		sim(curCandidate);
+		
+		function_args locals_test;
+		locals_test.thisCell = 0;
+		locals_test.typegrid = curCandidate;
+		locals_test.adjacency_sg = adjacency1_sg;
+		locals_test.energy_g = energy1_g;
+		locals_test.heat_g = heat1_g;
+		locals_test.properties_g = properties1_g;
+		
+		sim(locals_test);
 		popRankings[i].index = i;
 		popRankings[i].result = scoreCurrentGrid();
 	}
@@ -109,7 +118,7 @@ void reproduce(){
 		mutate(i);
 		
 		//run the sim immediately, if the child is not viable (v < 0), try a new child.
-		sim(newCandidateIx(i));
+		//sim(newCandidateIx(i));
 		if(scoreCurrentGrid() < 0){
 			i--;
 		}	

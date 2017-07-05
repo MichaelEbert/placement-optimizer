@@ -21,7 +21,6 @@ static res_cell energy1_g[GRID_SIZE];
 static res_cell heat1_g[GRID_SIZE];
 static res_cell locala1_g[GRID_SIZE];
 static cell_properties properties1_g[GRID_SIZE];
-function_args tlocal_test{0,nullptr,adjacency1_sg,properties1_g,energy1_g,heat1_g};
 
 /*want: a grid type that I can use interchangably, regardless of teh size of the cells.
 -templates or passing around array size
