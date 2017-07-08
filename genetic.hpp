@@ -56,7 +56,7 @@ void evaluate(){
 		
 		sim(locals_test);
 		popRankings[i].index = i;
-		popRankings[i].result = scoreCurrentGrid();
+		popRankings[i].result = scoreCurrentGrid(locals_test);
 	}
 	std::sort(popRankings.begin(),popRankings.end(),rankingSort);
 }
@@ -119,9 +119,9 @@ void reproduce(){
 		
 		//run the sim immediately, if the child is not viable (v < 0), try a new child.
 		//sim(newCandidateIx(i));
-		if(scoreCurrentGrid() < 0){
-			i--;
-		}	
+//		if(scoreCurrentGrid() < 0){
+//			i--;
+//		}	
 	}
 	int parentOffset = POP_SIZE-TOP_PARENTS_RESERVED_SLOTS;
 	for(unsigned int i = parentOffset; i < POP_SIZE; i++){

@@ -38,15 +38,21 @@ int allthreads_bestScore[NUM_THREADS];
 
 void bruteForce(int threadnum){
 	cell bestGrid[GRID_SIZE];
+	//thread-local grids
 	cell type_g[GRID_SIZE];
+	adjacency_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+	res_cell energy_g[GRID_SIZE];
+	res_cell heat_g[GRID_SIZE];
+	res_cell locala_g[GRID_SIZE];
+	cell_properties properties_g[GRID_SIZE];
 	
 	function_args locals_test;
 	locals_test.thisCell = 0;
 	locals_test.typegrid = type_g;
-	locals_test.adjacency_sg = adjacency1_sg;
-	locals_test.energy_g = energy1_g;
-	locals_test.heat_g = heat1_g;
-	locals_test.properties_g = properties1_g;
+	locals_test.adjacency_sg = adjacency_sg;
+	locals_test.energy_g = energy_g;
+	locals_test.heat_g = heat_g;
+	locals_test.properties_g = properties_g;
 	
 	int bestSoFar = 0;
 	memset(type_g, 0, GRID_SIZE);
@@ -54,7 +60,9 @@ void bruteForce(int threadnum){
 	for(unsigned long i = 0; i < brute_force_iterations; i++){
 		increment_grid(locals_test);
 		sim(locals_test);
-		int thisSum = scoreCurrentGrid();
+		int thisSum = scoreCurrentGrid(locals_test);
+//		printMatrix(type_g);
+//		printf("result is %d\n",thisSum);
 		if(thisSum > bestSoFar){
 			bestSoFar = thisSum;
 			//bestHeat = heatSum;

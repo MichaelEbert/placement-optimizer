@@ -74,10 +74,10 @@ void sumAdjacentComponents(function_args& tlocals) noexcept
 
 //clears all grids except for 'type_g'
 inline void clear_non_type_grids(function_args& tlocals) noexcept{
-	memset(tlocals.adjacency_sg,0,sizeof(tlocals.adjacency_sg));
-	memset(tlocals.energy_g,0,sizeof(tlocals.energy_g));
-	memset(tlocals.heat_g,0,sizeof(tlocals.heat_g));
-	memset(tlocals.properties_g,0,sizeof(tlocals.properties_g));
+	memset(tlocals.adjacency_sg,0,sizeof(tlocals.adjacency_sg[0])*GRID_SIZE*NUM_COMPONENT_TYPES);
+	memset(tlocals.energy_g,0,sizeof(tlocals.energy_g[0])*GRID_SIZE);
+	memset(tlocals.heat_g,0,sizeof(tlocals.heat_g[0])*GRID_SIZE);
+	memset(tlocals.properties_g,0,sizeof(tlocals.properties_g[0])*GRID_SIZE);
 	return;
 }
 

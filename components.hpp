@@ -132,12 +132,12 @@ constexpr size_t array_size(T(&)[N]){
 
 //return the score of the current grid. undefined if called before sim();
 //modify this to change the goal of the program.
-result_t scoreCurrentGrid() noexcept{
-		res_cell heatSum = sum_grid<>(heat1_g, GRID_SIZE);
+result_t scoreCurrentGrid(function_args& tlocals) noexcept{
+		res_cell heatSum = sum_grid<>(tlocals.heat_g, GRID_SIZE);
 		if(heatSum > 0){
 			return -static_cast<result_t>(heatSum);
 		}
-		int thisSum = sum_grid(energy1_g, GRID_SIZE);
+		int thisSum = sum_grid(tlocals.energy_g, GRID_SIZE);
 		return static_cast<result_t>(thisSum);
 }
 	
