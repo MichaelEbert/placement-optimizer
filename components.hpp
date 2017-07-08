@@ -50,12 +50,12 @@ enum resource_ids{
 class Component{
 public:
 	static const bool acceptsHeat = true;
-	static const void component_setup(gsize_t thisCell, thread_grids& tgrids) noexcept{
-		sumAdjacentComponents(thisCell, tgrids);
-		(tgrids.properties_g)[thisCell].acceptsHeat = acceptsHeat;
+	static const void component_setup(function_args& tlocals) noexcept{
+		sumAdjacentComponents(tlocals);
+		(tlocals.properties_g)[tlocals.thisCell].acceptsHeat = acceptsHeat;
 		return;
 	}
-	static const void component_action(gsize_t thisCell, thread_grids& tgrids) noexcept{
+	static const void component_action(function_args& tlocals) noexcept{
 		return;
 	}
 	
@@ -63,7 +63,7 @@ public:
 
 class None : public Component{
 	public:
-		static const void component_setup(gsize_t thisCell, thread_grids& tgrids) noexcept{
+		static const void component_setup(function_args& tlocals) noexcept{
 			return;
 		}
 };
@@ -76,8 +76,8 @@ public:
 class HeatSink: public Component{
 public:
 	static const signed int HEATSINK_HEAT_START = -5;
-	static const void component_action(gsize_t thisCell, thread_grids& tgrids) noexcept{
-		tgrids.heat_g[thisCell] = -5;
+	static const void component_action(function_args& tlocals) noexcept{
+		tlocals.heat_g[tlocals.thisCell] = -5;
 		return;
 	}
 };
@@ -95,16 +95,16 @@ class Reactor: public Component{
 //	}
 //	adjEffect<T::acceptsHeat,variables::adjComponents,operator+>
 	
-	static const void component_setup(gsize_t thisCell, thread_grids& tgrids) noexcept{
-		Component::component_setup(thisCell, tgrids);
+	static const void component_setup(function_args& tlocals) noexcept{
+		Component::component_setup(tlocals);
 		//locala_g[lin(x,y)] = sum_adjacent_with_property(thisCell,x,y,acceptsHeat)
 		
 	}
-	static const void component_action(gsize_t thisCell, thread_grids& tgrids) noexcept{
-		adjacency_t* this_adjacency = tgrids.adjacency_sg+(thisCell*NUM_COMPONENT_TYPES);
+	static const void component_action(function_args& tlocals) noexcept{
+		adjacency_t* this_adjacency = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
 		auto numReactors = this_adjacency[REACTOR_ID]+1;
-		tgrids.energy_g[thisCell] = numReactors;
-		tgrids.heat_g[thisCell] = numReactors*numReactors;
+		tlocals.energy_g[tlocals.thisCell] = numReactors;
+		tlocals.heat_g[tlocals.thisCell] = numReactors*numReactors;
 		return;
 	}
 };
