@@ -18,13 +18,13 @@ types.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->genetic_types.hpp
 
 //#include "gridManip_after.hpp"
 #include "genetic.hpp"
-const static int NUM_THREADS = 1;
+const static int NUM_THREADS = 4;
 
 int printMatrix(cell* matrix) noexcept;
 int calcEfficiency(std::vector<std::vector<int>> matrix);
 
 
-constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, (GRID_SIZE-0));
+constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, (GRID_SIZE-1));
 
 void printResultsToFile(int topa,int topb,int topc,char* filename){
 	auto file = fopen(filename,"ab");
@@ -85,18 +85,19 @@ int main(int argc, char** argv)
 		allthreads_bestGrid[i] = (cell*)malloc(sizeof(cell)*GRID_SIZE);
 	}
 	printf("iterations: %u (expected time %2f seconds +- 50%%)\n",brute_force_iterations,brute_force_iterations/4000000.0f);
-	bruteForce(0);
-//	std::thread t0 (bruteForce,0);
-//	std::thread t1 (bruteForce,1);
-//	std::thread t2 (bruteForce,2);
-//	std::thread t3 (bruteForce,3);
-//	t0.join();
-//	t1.join();
-//	t2.join();
-//	t3.join();
-//	printf("optimal result is %d\n",*std::max_element(std::begin(allthreads_bestScore),std::end(allthreads_bestScore)));
-//	printMatrix(allthreads_bestGrid[0]);
-	printf("optimal is %d\n",allthreads_bestScore[0]);
+//	bruteForce(1);
+	std::thread t0 (bruteForce,0);
+	std::thread t1 (bruteForce,1);
+	std::thread t2 (bruteForce,2);
+	std::thread t3 (bruteForce,3);
+	t0.join();
+	t1.join();
+	t2.join();
+	t3.join();
+	printf("optimal result is %d\n",*std::max_element(std::begin(allthreads_bestScore),std::end(allthreads_bestScore)));
+	//TODO fix this to print correct grid
+	printMatrix(allthreads_bestGrid[0]);
+	//printf("optimal is %d\n",allthreads_bestScore[0]);
 	return 0;
 //-----genetic algorithm-----
 //look up pruning genetic algorithm - heuristic
