@@ -45,8 +45,20 @@ enum resource_ids{
 	RES_ENERGY_ID,
 	RES_HEAT_ID
 };
-//NEXT TO DO: replace cell* thisCell with a cell offset - can just go types[offset] to get this cell as variables are global.
-//template so that we can use exactly the arguments we want?
+
+//counts the number of adjacent components that can accept heat
+template<typename ComponentType>
+struct AdjacentAcceptHeat{
+	static int func(function_args& tlocals){
+		if(ComponentType::acceptsHeat){
+			adjacency_t* this_adjacency = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
+			return this_adjacency[ComponentType::index];
+		}
+		return 0;
+	}
+};
+
+
 class Component{
 public:
 	static const bool acceptsHeat = true;
@@ -63,6 +75,8 @@ public:
 
 class None : public Component{
 	public:
+		static const int index = NONE_ID;
+		static const bool acceptsHeat = false;
 		static const void component_setup(function_args& tlocals) noexcept{
 			return;
 		}
@@ -70,11 +84,15 @@ class None : public Component{
 
 class Spreader : public Component{
 public:
+	static const int index = SPREADER_ID;
+	static const bool acceptsHeat = true;
 	
 };
 
 class HeatSink: public Component{
 public:
+	static const int index = HEATSINK_ID;
+	static const bool acceptsHeat = true;
 	static const signed int HEATSINK_HEAT_START = -5;
 	static const void component_action(function_args& tlocals) noexcept{
 		tlocals.heat_g[tlocals.thisCell] = -5;
@@ -82,9 +100,9 @@ public:
 	}
 };
 
-
 class Reactor: public Component{
 	public:
+	static const int index = REACTOR_ID;
 	static const bool acceptsHeat = false;
 //	static constexpr Setup()
 //	adjacency REACTOR(){
@@ -97,8 +115,7 @@ class Reactor: public Component{
 	
 	static const void component_setup(function_args& tlocals) noexcept{
 		Component::component_setup(tlocals);
-		adjacency_t* this_adjacency = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
-		tlocals.locals_g[tlocals.thisCell].localA = this_adjacency[HEATSINK_ID]+this_adjacency[SPREADER_ID];
+		tlocals.locals_g[tlocals.thisCell].localA = FoldOverAllTypes<int,AdjacentAcceptHeat,function_args&,FoldAdd>(tlocals);
 		
 	}
 	static const void component_action(function_args& tlocals) noexcept{

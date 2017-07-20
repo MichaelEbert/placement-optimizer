@@ -12,7 +12,7 @@
 
 /*
 include order:
-types.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->genetic_types.hpp->genetic.hpp->main.cpp
+types.hpp->foldOverTypes.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp->genetic_types.hpp->genetic.hpp->main.cpp
 
 */
 

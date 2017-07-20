@@ -1,7 +1,7 @@
 //gridManip.h - contains grid manipulation methods
 #pragma once
 #include <cstring>
-#include "types.hpp"
+#include "foldOverTypes.hpp"
 //functions for detecting if the given index is on an edge of the grid.
 inline bool is_left_edge(gsize_t index) noexcept{
 	return (index%GRID_X_SIZE == 0);
@@ -55,16 +55,80 @@ C sum_grid(C* grid, gsize_t gridSize) noexcept{
 	return total;
 }
 
+//may be able to do this in parallel
+//gets how many of each component are adjacent to this component, stores it in adjacency_sg.
+void sumAdjacentComponents(function_args& tlocals) noexcept
+{
+	auto thisCell = tlocals.thisCell;
+	auto adjComponents = tlocals.adjacency_sg+(thisCell*NUM_COMPONENT_TYPES);
+	auto tCell = tlocals.typegrid+thisCell;
+	cell* adjCell;
+	for(int i = 0; i < 4; i++){
+		bool invalid = false;
+		switch(i){
+			case 0:
+			adjCell = cell_neighbor(tCell, 1,0);
+			invalid = is_right_edge(thisCell);
+			break;
+			case 1:
+			adjCell = cell_neighbor(tCell, -1,0);
+			invalid = is_left_edge(thisCell);
+			break;
+			case 2:
+			adjCell = cell_neighbor(tCell, 0,1);
+			invalid = is_bottom_edge(thisCell);
+			break;
+			case 3:
+			adjCell = cell_neighbor(tCell, 0,-1);
+			invalid = is_top_edge(thisCell);
+			break;
+		}
+		if(!invalid){
+			//printf("%d:%d\n",thisCell,*adjCell);
+			adjComponents[*adjCell]++;
+		}
+	}
+	return;
+}
 
+//clears all grids except for 'type_g'
+inline void clear_non_type_grids(function_args& tlocals) noexcept{
+	memset(tlocals.adjacency_sg,0,sizeof(tlocals.adjacency_sg[0])*GRID_SIZE*NUM_COMPONENT_TYPES);
+	memset(tlocals.energy_g,0,sizeof(tlocals.energy_g[0])*GRID_SIZE);
+	memset(tlocals.heat_g,0,sizeof(tlocals.heat_g[0])*GRID_SIZE);
+	memset(tlocals.properties_g,0,sizeof(tlocals.properties_g[0])*GRID_SIZE);
+	return;
+}
+
+//implemented in gridManip_after.hpp
 int setup_grid(function_args& tlocals) noexcept;
 int run_grid(function_args& tlocals) noexcept;
-
-void sumAdjacentComponents(function_args& tlocals) noexcept;
-
-void increment_grid(function_args& tlocals) noexcept;//increment grid. used for brute force search.
-
-void sim(function_args& tlocals) noexcept;//sim the grid typegrid 
+//implemented in components.hpp
 result_t scoreCurrentGrid() noexcept;//score the current grid. should not be called before sim().
 
+//sim the grid typegrid.
+void sim(function_args& tlocals) noexcept{
+	clear_non_type_grids(tlocals);
+	setup_grid(tlocals);
+	run_grid(tlocals);
+	if(COUNT_SIMS){
+		count_sims_low++;
+	}
+	return;
+}
 
+//increment the grid by 1. used in brute force search.
+void increment_grid(function_args& tlocals) noexcept{
+	tlocals.typegrid[0]++;
+	//if grid[0] == NUM_COMPONENT_TYPES, carry
+	for(gsize_t i = 0; i < GRID_SIZE; i++){
+		if(tlocals.typegrid[i] == NUM_COMPONENT_TYPES){
+			tlocals.typegrid[i] = 0;
+			tlocals.typegrid[i+1]++;
+		}
+		else{
+			return;
+		}
+	}
+}
 

@@ -11,7 +11,6 @@ typedef unsigned int gsize_t;
 typedef signed long goffset_t;//max offset = entire grid.
 typedef signed int result_t;//type of result used in genetic algorithm to evaluate candidates
 
-
 //GRID TYPEDEFS
 //basically instead of doing (instance.field), we want to write field[instance]
 //grids: adjacency special grid, resource grids, property grid 
@@ -47,6 +46,12 @@ typedef struct{
 //function example declaration: func(gsize_t thisCell, grid typegrid, adjacency_t* adjacency_sg)
 typedef const void (*component_func_t)(function_args&);
 
+//COMPONENT TYPE NAMES
+//needed for fold over all types
+class None;
+class Spreader;
+class HeatSink;
+class Reactor;
 
 
 #define COUNT_SIMS true
