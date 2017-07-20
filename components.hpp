@@ -97,7 +97,8 @@ class Reactor: public Component{
 	
 	static const void component_setup(function_args& tlocals) noexcept{
 		Component::component_setup(tlocals);
-		//locala_g[lin(x,y)] = sum_adjacent_with_property(thisCell,x,y,acceptsHeat)
+		adjacency_t* this_adjacency = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
+		tlocals.locals_g[tlocals.thisCell].localA = this_adjacency[HEATSINK_ID]+this_adjacency[SPREADER_ID];
 		
 	}
 	static const void component_action(function_args& tlocals) noexcept{
@@ -141,6 +142,30 @@ result_t scoreCurrentGrid(function_args& tlocals) noexcept{
 		return static_cast<result_t>(thisSum);
 }
 	
+
+//---attempt to do generic property listing/selection---
+//template<class c>
+//get_class_index(){
+//	return c::index;
+//}
+//
+//sum_adj_with_prop(prop p){
+//	if(c::p){
+//		n+=adj[c::index]
+//	}
+//	
+//}
+////prop ACCEPTS_HEAT
+//sum_adj_with_prop(){
+//	return adj[HeatSink::index]+adj[Spreader::index];
+//}
+//
+////recursive template?
+//template<class c, classes cs>
+//sum_adj_recursive(){
+//	return (maybe c::index)+sum_adj_recursive<cs>();
+//}
+//---attempt end---
 
 //generic
 

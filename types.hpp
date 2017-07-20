@@ -40,6 +40,7 @@ typedef struct{
 	cell_properties* properties_g;
 	res_cell* energy_g;
 	res_cell* heat_g;
+	localVars* locals_g;
 } function_args;
 
 //most functions should take in all variables for use... huh. think about inlining more maybe?
