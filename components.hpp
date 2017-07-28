@@ -58,6 +58,17 @@ struct AdjacentAcceptHeat{
 	}
 };
 
+for_each_adjacent(){
+	
+}
+
+res_cell getHeat(function_args& tlocals, gsize_t adjAddress){
+	if(tlocals.typegrid[adjAddress] == REACTOR_ID){
+		return (tlocals.locals_g[adjAddress].localB)/(tlocals.locals_g[adjAddress].localA);
+	}
+
+}
+
 
 class Component{
 public:
@@ -93,9 +104,15 @@ class HeatSink: public Component{
 public:
 	static const int index = HEATSINK_ID;
 	static const bool acceptsHeat = true;
-	static const signed int HEATSINK_HEAT_START = -5;
+	static const res_cell HEATSINK_HEAT_START = -5;
+	static const void component_setup(function_args& tlocals) noexcept{
+		Component::component_setup(tlocals);
+		tlocals.heat_g[tlocals.thisCell] = HEATSINK_HEAT_START;
+	}
 	static const void component_action(function_args& tlocals) noexcept{
-		tlocals.heat_g[tlocals.thisCell] = -5;
+		//for each adjacent reactor, add some heat to this one
+		
+		//tlocals.heat_g[tlocals.thisCell] += -5;
 		return;
 	}
 };
@@ -115,14 +132,18 @@ class Reactor: public Component{
 	
 	static const void component_setup(function_args& tlocals) noexcept{
 		Component::component_setup(tlocals);
-		tlocals.locals_g[tlocals.thisCell].localA = FoldOverAllTypes<int,AdjacentAcceptHeat,function_args&,FoldAdd>(tlocals);
-		
-	}
-	static const void component_action(function_args& tlocals) noexcept{
+		auto numAdjHeatAcceptors = FoldOverAllTypes<int,AdjacentAcceptHeat,function_args&,FoldAdd>(tlocals);
+		tlocals.locals_g[tlocals.thisCell].localA = numAdjHeatAcceptors;
 		adjacency_t* this_adjacency = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
 		auto numReactors = this_adjacency[REACTOR_ID]+1;
 		tlocals.energy_g[tlocals.thisCell] = numReactors;
-		tlocals.heat_g[tlocals.thisCell] = numReactors*numReactors;
+		//heat will be dispersed to adjacent components, so we store it in localB
+		tlocals.locals_g[tlocals.thisCell].localB = numReactors*numReactors;
+		//unless numAdjHeatAcceptors == 0, in which case we(attempt to) disqualify this design
+		tlocals.heat_g[tlocals.thisCell] = (!numAdjHeatAcceptors)*120;
+		
+	}
+	static const void component_action(function_args& tlocals) noexcept{
 		return;
 	}
 };

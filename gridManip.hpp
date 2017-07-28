@@ -43,6 +43,11 @@ inline cell* cell_neighbor(cell* thisCell, goffset_t deltaX, goffset_t deltaY) n
 	return thisCell + cell_XOffset(deltaX) + cell_YOffset(deltaY, GRID_X_SIZE);
 }
 
+//index offset
+inline gsize_t cell_neighbor_offset(gsize_t thisOffset, goffset_t deltaX, goffset_t deltaY) noexcept{
+	return thisOffset+cell_XOffset(deltaX) + cell_YOffset(deltaY, GRID_X_SIZE);
+}
+
 //sums the resources of type RESOURCE for grid GRID
 //TODO: ensure gridSize is size of grid
 template<typename C>
@@ -54,6 +59,41 @@ C sum_grid(C* grid, gsize_t gridSize) noexcept{
 	}
 	return total;
 }
+
+//do i want to do this for just 4? or somehow do like a radius thing?
+template<typename Functor>
+void doForAdjacents(function_args& tlocals){
+	auto thisCell = tlocals.thisCell;
+	gsize_t neighborIndex;
+	if(!is_right_edge(thisCell)){
+		neighborIndex = cell_neighbor_offset(thisCell,1,0);
+		Functor::func(tlocals,neighborIndex);	
+	}
+	if(!is_left_edge(thisCell)){
+		neighborIndex = cell_neighbor_offset(thisCell, -1,0);
+		Functor::func(tlocals,neighborIndex);
+	}
+	if(!is_bottom_edge(thisCell)){
+		neighborIndex = cell_neighbor_offset(thisCell, 0,1);
+		Functor::func(tlocals,neighborIndex);
+	}
+	if(!is_top_edge(thisCell)){
+		neighborIndex = cell_neighbor_offset(thisCell, 0,-1);
+		Functor::func(tlocals,neighborIndex);
+	}
+	return;	
+}
+
+
+struct adjTypeSum{
+	void func(function_args& tlocals, gsize_t neighborIndex){
+		auto adjType = tlocals.typegrid[neighborIndex];
+		auto adjComponents = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
+		adjComponents[adjType]++;
+		return;
+	}
+};
+
 
 //may be able to do this in parallel
 //gets how many of each component are adjacent to this component, stores it in adjacency_sg.
