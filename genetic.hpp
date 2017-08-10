@@ -34,7 +34,7 @@ void seed(){
     candidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*POP_SIZE));
     newCandidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*POP_SIZE));
     for(unsigned int i = 0; i < POP_SIZE; i++){
-    	grid curCandidate = candidates+(i*GRID_SIZE);
+    	cell* curCandidate = candidates+(i*GRID_SIZE);
     	for(gsize_t c = 0; c < GRID_SIZE; c++){
     		curCandidate[c] = randComponent(rng);
     	}
@@ -44,15 +44,15 @@ void seed(){
 
 void evaluate(){
 	for(unsigned int i = 0; i < POP_SIZE; i++){
-		grid curCandidate = candidates+(i*GRID_SIZE);
+		cell* curCandidate = candidates+(i*GRID_SIZE);
 		
 		function_args locals_test;
-		locals_test.thisCell = 0;
-		locals_test.typegrid = curCandidate;
-		locals_test.adjacency_sg = adjacency1_sg;
-		locals_test.energy_g = energy1_g;
-		locals_test.heat_g = heat1_g;
-		locals_test.properties_g = properties1_g;
+//		locals_test.thisCell = 0;
+//		locals_test.typegrid = curCandidate;
+//		locals_test.adjacency_sg = ;
+//		locals_test.energy_g = energy1_g;
+//		locals_test.heat_g = heat1_g;
+//		locals_test.properties_g = properties1_g;
 		
 		sim(locals_test);
 		popRankings[i].index = i;
@@ -86,7 +86,7 @@ int get_parent(int totalWeight){
 }
 
 //going to try the "pick a random point, everything before is from A, everything after is from B".
-void mate(grid parentA, grid parentB, grid child){
+void mate(cell* parentA, cell* parentB, cell* child){
 	int midIndex = randCellIndex(rng);
 	memcpy(child,parentA,midIndex*sizeof(cell));
 	memcpy(child+midIndex,parentB+midIndex,sizeof(cell)*(GRID_SIZE - midIndex));

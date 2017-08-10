@@ -20,7 +20,11 @@ types.hpp->foldOverTypes.hpp->gridManip.hpp->components.hpp->gridManip_after.hpp
 #include "genetic.hpp"
 const static int NUM_THREADS = 4;
 
+template<typename T>
+int printMatrix(T* matrix) noexcept;
+template<>
 int printMatrix(cell* matrix) noexcept;
+
 int calcEfficiency(std::vector<std::vector<int>> matrix);
 
 
@@ -43,8 +47,8 @@ void bruteForce(int threadnum){
 	adjacency_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
 	res_cell energy_g[GRID_SIZE];
 	res_cell heat_g[GRID_SIZE];
-	res_cell locala_g[GRID_SIZE];
 	cell_properties properties_g[GRID_SIZE];
+	LocalVars locals_g[GRID_SIZE];
 	
 	function_args locals_test;
 	locals_test.thisCell = 0;
@@ -53,6 +57,7 @@ void bruteForce(int threadnum){
 	locals_test.energy_g = energy_g;
 	locals_test.heat_g = heat_g;
 	locals_test.properties_g = properties_g;
+	locals_test.locals_g = locals_g;
 	
 	int bestSoFar = 0;
 	memset(type_g, 0, GRID_SIZE);
@@ -73,6 +78,33 @@ void bruteForce(int threadnum){
 	allthreads_bestScore[threadnum] = bestSoFar;
 }
 	
+//we only save the optimal result positions, so we need to regenerate all other information for the optimal result
+void displayOptimalResult(cell* bestGrid){
+	adjacency_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+	res_cell energy_g[GRID_SIZE];
+	res_cell heat_g[GRID_SIZE];
+	cell_properties properties_g[GRID_SIZE];
+	LocalVars locals_g[GRID_SIZE];
+	
+	function_args locals_test;
+	locals_test.thisCell = 0;
+	locals_test.typegrid = bestGrid;
+	locals_test.adjacency_sg = adjacency_sg;
+	locals_test.energy_g = energy_g;
+	locals_test.heat_g = heat_g;
+	locals_test.properties_g = properties_g;
+	locals_test.locals_g = locals_g;
+	
+	sim(locals_test);
+	printf("optimal result:\n");
+	printMatrix(bestGrid);
+	printf("energy grid:\n");
+	printMatrix(energy_g);
+	printf("heat grid:\n");
+	printMatrix(heat_g);
+	
+	return;
+}
 	
 
 int main(int argc, char** argv)
@@ -94,9 +126,13 @@ int main(int argc, char** argv)
 	t1.join();
 	t2.join();
 	t3.join();
-	printf("optimal result is %d\n",*std::max_element(std::begin(allthreads_bestScore),std::end(allthreads_bestScore)));
+	auto maxElementIt = std::max_element(std::begin(allthreads_bestScore),std::end(allthreads_bestScore));
+	printf("optimal result is %d\n",*maxElementIt);
 	//TODO fix this to print correct grid
-	printMatrix(allthreads_bestGrid[0]);
+	auto maxElementIndex = std::distance(std::begin(allthreads_bestScore),maxElementIt);
+	displayOptimalResult(allthreads_bestGrid[maxElementIndex]);
+	
+	//printMatrix(allthreads_bestGrid[0]);
 	//printf("optimal is %d\n",allthreads_bestScore[0]);
 	return 0;
 //-----genetic algorithm-----
@@ -142,31 +178,43 @@ int main(int argc, char** argv)
 
 /*
 array positions:
-[ ][ ][ ][ ][ ][ ][ ]
-[ ][0][1][2][3][4][ ]
-[ ][5][6][7][8][9][ ]
-[ ][ ][ ][ ][ ][ ][ ]
+[0][1][2][3][4]
+[5][6][7][8][9]
+etc.
 */
 
 //todo: template to size of matrix?
+template<typename T>
+int printMatrix(T* matrix) noexcept
+{
+	for(int i = 0; i < GRID_Y_SIZE; i++){
+		for(int j = 0; j < GRID_X_SIZE; j++){
+			printf("%d\t", matrix[cell_linear_offset(j,i)]);
+		}
+		printf("\n");
+	}
+	return 0;
+}
+
+template<>
 int printMatrix(cell* matrix) noexcept
 {
 	char toPrint = 'x';
 	for(int i = 0; i < GRID_Y_SIZE; i++){
 		for(int j = 0; j < GRID_X_SIZE; j++){
 			switch(matrix[cell_linear_offset(j,i)]){
-//				case 0:
-//					toPrint = '_';
-//					break;
-//				case 1:
-//					toPrint = 'R';
-//					break;
-//				case 2:
-//					toPrint = 'S';
-//					break;
-//				case 3:
-//					toPrint = '+';
-//					break;
+				case NONE_ID:
+					toPrint = '_';
+					break;
+				case REACTOR_ID:
+					toPrint = 'R';
+					break;
+				case HEATSINK_ID:
+					toPrint = 'S';
+					break;
+				case SPREADER_ID:
+					toPrint = '+';
+					break;
 				default:
 					toPrint = '0'+matrix[cell_linear_offset(j,i)];
 					break;

@@ -49,7 +49,6 @@ inline gsize_t cell_neighbor_offset(gsize_t thisOffset, goffset_t deltaX, goffse
 }
 
 //sums the resources of type RESOURCE for grid GRID
-//TODO: ensure gridSize is size of grid
 template<typename C>
 C sum_grid(C* grid, gsize_t gridSize) noexcept{
 	C total = 0;
@@ -137,6 +136,7 @@ inline void clear_non_type_grids(function_args& tlocals) noexcept{
 	memset(tlocals.energy_g,0,sizeof(tlocals.energy_g[0])*GRID_SIZE);
 	memset(tlocals.heat_g,0,sizeof(tlocals.heat_g[0])*GRID_SIZE);
 	memset(tlocals.properties_g,0,sizeof(tlocals.properties_g[0])*GRID_SIZE);
+	memset(tlocals.locals_g,0,sizeof(tlocals.locals_g[0])*GRID_SIZE);
 	return;
 }
 

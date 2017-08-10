@@ -1,7 +1,7 @@
 #pragma once
 #include "components.hpp"
 
-//TODO: ensure valid setups (is even possible?)
+//do the setup functions for each component
 int setup_grid(function_args& tlocals) noexcept{
 	for(gsize_t i = 0; i < GRID_SIZE; i++){
 		tlocals.thisCell = i;
@@ -10,7 +10,7 @@ int setup_grid(function_args& tlocals) noexcept{
 	return 0;
 }
 
-//TODO: ensure valid runs (is even possible?)
+//do the run function for each component
 int run_grid(function_args& tlocals) noexcept{
 	for(gsize_t i = 0; i < GRID_SIZE; i++){
 		tlocals.thisCell = i;

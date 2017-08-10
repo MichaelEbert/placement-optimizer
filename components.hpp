@@ -16,11 +16,11 @@
 //reserve space
 
 //need to pass these in as vars :(
-static adjacency_t adjacency1_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
-static res_cell energy1_g[GRID_SIZE];
-static res_cell heat1_g[GRID_SIZE];
-static res_cell locala1_g[GRID_SIZE];
-static cell_properties properties1_g[GRID_SIZE];
+//static adjacency_t adjacency1_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+//static res_cell energy1_g[GRID_SIZE];
+//static res_cell heat1_g[GRID_SIZE];
+//static res_cell locala1_g[GRID_SIZE];
+//static cell_properties properties1_g[GRID_SIZE];
 
 /*want: a grid type that I can use interchangably, regardless of teh size of the cells.
 -templates or passing around array size
@@ -58,21 +58,20 @@ struct AdjacentAcceptHeat{
 	}
 };
 
-for_each_adjacent(){
-	
-}
-
-res_cell getHeat(function_args& tlocals, gsize_t adjAddress){
-	if(tlocals.typegrid[adjAddress] == REACTOR_ID){
-		return (tlocals.locals_g[adjAddress].localB)/(tlocals.locals_g[adjAddress].localA);
+//get adjacent heat values
+struct getAdjHeat{	
+	static void func(function_args& tlocals, gsize_t adjAddress){
+		if(tlocals.typegrid[adjAddress] == REACTOR_ID){
+			tlocals.heat_g[tlocals.thisCell]+= (tlocals.locals_g[adjAddress].localB)/(tlocals.locals_g[adjAddress].localA);
+		}
 	}
-
-}
+};
 
 
 class Component{
 public:
 	static const bool acceptsHeat = true;
+	static const bool providesHeat = false;
 	static const void component_setup(function_args& tlocals) noexcept{
 		sumAdjacentComponents(tlocals);
 		(tlocals.properties_g)[tlocals.thisCell].acceptsHeat = acceptsHeat;
@@ -88,6 +87,7 @@ class None : public Component{
 	public:
 		static const int index = NONE_ID;
 		static const bool acceptsHeat = false;
+		static const bool providesHeat = false;
 		static const void component_setup(function_args& tlocals) noexcept{
 			return;
 		}
@@ -97,30 +97,45 @@ class Spreader : public Component{
 public:
 	static const int index = SPREADER_ID;
 	static const bool acceptsHeat = true;
+	static const bool providesHeat = true;
+	static const void component_action(function_args& tlocals) noexcept{
+		doForAdjacents<getAdjHeat>(tlocals);
+		return;
+	}
 	
 };
 
+/*
+how heat sinks work:
+setup: calculate heat produced
+run: attach to heat networks?
+*/
 class HeatSink: public Component{
 public:
 	static const int index = HEATSINK_ID;
 	static const bool acceptsHeat = true;
+	static const bool providesHeat = false;
 	static const res_cell HEATSINK_HEAT_START = -5;
 	static const void component_setup(function_args& tlocals) noexcept{
 		Component::component_setup(tlocals);
 		tlocals.heat_g[tlocals.thisCell] = HEATSINK_HEAT_START;
 	}
 	static const void component_action(function_args& tlocals) noexcept{
-		//for each adjacent reactor, add some heat to this one
-		
-		//tlocals.heat_g[tlocals.thisCell] += -5;
+		doForAdjacents<getAdjHeat>(tlocals);
 		return;
 	}
 };
 
+/*
+how reactors work:
+setup: calculate heat/energy produced, get adjacent heat acceptors (for splitting heat)
+run: nothing
+*/
 class Reactor: public Component{
 	public:
 	static const int index = REACTOR_ID;
 	static const bool acceptsHeat = false;
+	static const bool providesHeat = true;
 //	static constexpr Setup()
 //	adjacency REACTOR(){
 //		this.ticks++;

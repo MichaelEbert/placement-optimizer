@@ -1,12 +1,11 @@
 #pragma once
 const short NUM_COMPONENT_TYPES = 4;
 const short NUM_RESOURCE_TYPES = 2;
-const short GRID_X_SIZE = 4;
+const short GRID_X_SIZE = 3;
 const short GRID_Y_SIZE = 4;
 
 const int GRID_SIZE = GRID_X_SIZE*GRID_Y_SIZE;
 typedef unsigned char cell;
-typedef cell* grid;
 typedef unsigned int gsize_t;
 typedef signed long goffset_t;//max offset = entire grid.
 typedef signed int result_t;//type of result used in genetic algorithm to evaluate candidates
@@ -27,19 +26,19 @@ typedef struct {
 	uint8_t Prop1:1;
 	uint8_t localA;
 	uint8_t localB;
-} localVars;
+} LocalVars;
 
 
 //FUNCTION TYPES
 //this struct contains thread local vars
 typedef struct{
 	gsize_t thisCell;
-	grid typegrid;
+	cell* typegrid;
 	adjacency_t* adjacency_sg;
 	cell_properties* properties_g;
 	res_cell* energy_g;
 	res_cell* heat_g;
-	localVars* locals_g;
+	LocalVars* locals_g;
 } function_args;
 
 //most functions should take in all variables for use... huh. think about inlining more maybe?
