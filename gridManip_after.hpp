@@ -1,5 +1,5 @@
 #pragma once
-#include "components.hpp"
+#include "componentMethods.hpp"
 
 //do the setup functions for each component
 int setup_grid(function_args& tlocals) noexcept{

@@ -1,7 +1,7 @@
 //gridManip.h - contains grid manipulation methods
 #pragma once
 #include <cstring>
-#include "foldOverTypes.hpp"
+#include "doForTypes.hpp"
 //functions for detecting if the given index is on an edge of the grid.
 inline bool is_left_edge(gsize_t index) noexcept{
 	return (index%GRID_X_SIZE == 0);
@@ -135,8 +135,8 @@ inline void clear_non_type_grids(function_args& tlocals) noexcept{
 	memset(tlocals.adjacency_sg,0,sizeof(tlocals.adjacency_sg[0])*GRID_SIZE*NUM_COMPONENT_TYPES);
 	memset(tlocals.energy_g,0,sizeof(tlocals.energy_g[0])*GRID_SIZE);
 	memset(tlocals.heat_g,0,sizeof(tlocals.heat_g[0])*GRID_SIZE);
-	memset(tlocals.properties_g,0,sizeof(tlocals.properties_g[0])*GRID_SIZE);
 	memset(tlocals.locals_g,0,sizeof(tlocals.locals_g[0])*GRID_SIZE);
+	tlocals.resNet.reset();
 	return;
 }
 

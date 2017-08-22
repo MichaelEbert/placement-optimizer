@@ -29,7 +29,7 @@ IncludeVersionInfo=0
 SupportXPThemes=0
 CompilerSet=0
 CompilerSettings=00000fc0g0000000000000000
-UnitCount=10
+UnitCount=13
 
 [VersionInfo]
 Major=1
@@ -140,7 +140,37 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit10]
-FileName=foldOverTypes.hpp
+FileName=doForTypes.hpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit11]
+FileName=resourceNetwork.hpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit12]
+FileName=bruteforce.hpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit13]
+FileName=componentMethods.hpp
 CompileCpp=1
 Folder=
 Compile=1

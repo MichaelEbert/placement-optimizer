@@ -1,4 +1,5 @@
 #pragma once
+#include "resourceNetwork.hpp"
 const short NUM_COMPONENT_TYPES = 4;
 const short NUM_RESOURCE_TYPES = 2;
 const short GRID_X_SIZE = 3;
@@ -10,22 +11,25 @@ typedef unsigned int gsize_t;
 typedef signed long goffset_t;//max offset = entire grid.
 typedef signed int result_t;//type of result used in genetic algorithm to evaluate candidates
 
+typedef uint8_t adjacency_t;//type of adjacency special grid
+typedef float res_cell;
+
 //GRID TYPEDEFS
 //basically instead of doing (instance.field), we want to write field[instance]
 //grids: adjacency special grid, resource grids, property grid 
-typedef uint8_t adjacency_t;//type of adjacency special grid
-typedef signed short res_cell;
+
 typedef struct {
-	uint8_t acceptsHeat:1;
-	uint8_t pad:7;
-} cell_properties;
+	bool acceptsHeat;
+	bool providesHeat;
+} component_properties;
 
 //localA is for variables that represent something for every type. localB is for whatever scrap you want
 typedef struct {
-	uint8_t adjComponents[NUM_COMPONENT_TYPES];
+	//uint8_t adjComponents[NUM_COMPONENT_TYPES];
 	uint8_t Prop1:1;
 	uint8_t localA;
 	uint8_t localB;
+	void* ptrA;
 } LocalVars;
 
 
@@ -35,23 +39,20 @@ typedef struct{
 	gsize_t thisCell;
 	cell* typegrid;
 	adjacency_t* adjacency_sg;
-	cell_properties* properties_g;
 	res_cell* energy_g;
 	res_cell* heat_g;
 	LocalVars* locals_g;
+	ResourceNetwork<res_cell> resNet;
 } function_args;
 
 //most functions should take in all variables for use... huh. think about inlining more maybe?
 //function example declaration: func(gsize_t thisCell, grid typegrid, adjacency_t* adjacency_sg)
 typedef const void (*component_func_t)(function_args&);
 
-//COMPONENT TYPE NAMES
-//needed for fold over all types
-class None;
-class Spreader;
-class HeatSink;
-class Reactor;
-
+template <typename T,size_t N>
+constexpr size_t array_size(T(&)[N]){
+	return N;
+}
 
 #define COUNT_SIMS true
 const unsigned long ONE_BILLION = 1000000000;

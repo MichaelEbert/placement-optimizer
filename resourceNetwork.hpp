@@ -12,32 +12,41 @@ testing to see if i can implement this better in a class.
 */
 
 //need double pointer so we can move around the single pointers behind the scenes to point to different slots
-typedef int** Network;
-
 
 const int MAX_NETWORKS = 16;
-const int DIRECT_CONNECTED_NETWORKS = 4;//adjust for performance?
+const int DIRECT_CONNECTED_NETWORKS = 4;//adjust for performance? -need to actually create a constructor and use it first
 
+//resource network for resource of type T
+template<typename T>
+using Network = T**;
+
+template<typename T>
 class ResourceNetwork{
 	public:
-		Network newNetwork();
-		void joinNetworks(Network a,Network b);
+		Network<T> newNetwork();
+		void joinNetworks(Network<T> a,Network<T> b);
+		void reset();
 	private:
 		int curMaxNet = 0;
-		int* networks[MAX_NETWORKS];
-		std::vector<Network> valueNetworkLists(DIRECT_CONNECTED_NETWORKS)[MAX_NETWORKS];
-		int values[MAX_NETWORKS];
-		
+		T* networks[MAX_NETWORKS];
+		std::vector<Network<T> > valueNetworkLists[MAX_NETWORKS];
+		T values[MAX_NETWORKS];
 };
 
-Network ResourceNetwork::newNetwork(){
+template<typename T>
+Network<T> ResourceNetwork<T>::newNetwork(){
+	if(curMaxNet>= MAX_NETWORKS){
+		printf("error max networks reached\n");
+		return nullptr;
+	}
 	networks[curMaxNet] = &values[curMaxNet];
 	valueNetworkLists[curMaxNet].emplace_back(&networks[curMaxNet]);
 	return &networks[curMaxNet++];
 }
 
 //join network B to network A
-void ResourceNetwork::joinNetworks(Network a,Network b){
+template<typename T>
+void ResourceNetwork<T>::joinNetworks(Network<T> a,Network<T> b){
 	if(*b==*a){
 		return;
 	}
@@ -50,6 +59,15 @@ void ResourceNetwork::joinNetworks(Network a,Network b){
 		*net = *a;
 	}
 	listA.insert(listA.end(),listB.begin(),listB.end());
+}
+
+template<typename T>
+void ResourceNetwork<T>::reset(){
+	for(int i = 0; i < curMaxNet-1;i++){
+		valueNetworkLists[i].clear();
+	}
+	curMaxNet=0;
+	return;
 }
 
 

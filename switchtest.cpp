@@ -30,6 +30,9 @@ int main(){
 	**(cellA.myNet)=5;
 	**(cellB.myNet)=3;
 	
-	resNet.joinNetworks(cellC.myNet,cellA.myNet);
+	resNet.joinNetworks(cellA.myNet,cellC.myNet);
+	printNetworks();
+	
+	**cellC.myNet = 32;
 	printNetworks();
 }
