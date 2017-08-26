@@ -38,7 +38,7 @@ void displayOptimalResult(cell* bestGrid){
 	res_cell energy_g[GRID_SIZE];
 	res_cell heat_g[GRID_SIZE];
 	LocalVars locals_g[GRID_SIZE];
-	ResourceNetwork<res_cell> resNet;
+	ResourceNetworkManager<res_cell> resNet;
 	
 	function_args locals_test;
 	locals_test.thisCell = 0;

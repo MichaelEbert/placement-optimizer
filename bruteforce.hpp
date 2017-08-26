@@ -10,8 +10,8 @@ divide up the work by having each thread have the last N components in the array
 wu = "work unit"
 */
 namespace threads{
-	const int num_static_slots = 3;//how many spots in the array are we going to specify
-	const int num_threads = 4;
+	const int num_static_slots = 2;//how many spots in the array are we going to specify
+	const int num_threads = 1;
 	const unsigned int iterations_per_wu = std::pow(NUM_COMPONENT_TYPES,GRID_SIZE-num_static_slots);
 	const unsigned int total_work_units = std::pow(NUM_COMPONENT_TYPES,num_static_slots);
 	constexpr float work_units_per_thread = static_cast<float>(total_work_units)/num_threads;
@@ -44,7 +44,7 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 	res_cell energy_g[GRID_SIZE];
 	res_cell heat_g[GRID_SIZE];
 	LocalVars locals_g[GRID_SIZE];
-	ResourceNetwork<res_cell> resNet;
+	ResourceNetworkManager<res_cell> resNet;
 	
 	function_args locals_test;
 	locals_test.thisCell = 0;
@@ -83,14 +83,15 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 std::unique_ptr<cell[]> bruteForce(){
 	std::unique_ptr<cell[]> bestGrid = std::make_unique<cell[]>(GRID_SIZE);
 	
-	{//user-defined grid instead of brute forcing this
-		cell testGrid[GRID_SIZE] = {HEATSINK_ID,SPREADER_ID,HEATSINK_ID,
-					HEATSINK_ID,REACTOR_ID ,HEATSINK_ID,
-					NONE_ID    ,HEATSINK_ID,NONE_ID,
-					0,0,0};
-		std::copy(std::begin(testGrid),std::end(testGrid),bestGrid.get());
-	}
-	return bestGrid;
+//	{//user-defined grid instead of brute forcing this
+//		cell testGrid[GRID_SIZE] = {
+//					REACTOR_ID,HEATSINK_ID,BOILER_ID,
+//					HEATSINK_ID,BOILER_ID,NONE_ID,
+//					BOILER_ID,NONE_ID,NONE_ID,
+//					0,0,0};
+//		std::copy(std::begin(testGrid),std::end(testGrid),bestGrid.get());
+//	}
+//	return bestGrid;
 	//------------actual algorithm
 	int bestSoFar = 0;
 	int bestHeat = 0;

@@ -26,6 +26,7 @@ class Component{
 public:
 	static const bool acceptsHeat = true;
 	static const bool providesHeat = false;
+	static const bool networkable = false;
 	static const void component_setup(function_args& tlocals) noexcept;
 	static const void component_action(function_args& tlocals) noexcept;	
 };
@@ -48,7 +49,7 @@ class Reactor: public Component{
 	static const int index = REACTOR_ID;
 	static const bool acceptsHeat = false;
 	static const bool providesHeat = true;
-	static constexpr int HEAT_PRODUCED = 20;
+	static constexpr res_cell heatProduced = 188;
 	static const void component_setup(function_args& tlocals) noexcept;
 	static const void component_action(function_args& tlocals) noexcept;
 };
@@ -63,7 +64,8 @@ public:
 	static const int index = HEATSINK_ID;
 	static const bool acceptsHeat = true;
 	static const bool providesHeat = false;
-	static constexpr res_cell HEATSINK_HEAT_START = -1;
+	static const bool networkable = true;
+	static constexpr res_cell heatProduced = 0;
 	static const void component_setup(function_args& tlocals) noexcept;
 	static const void component_action(function_args& tlocals) noexcept;
 };
@@ -78,6 +80,7 @@ public:
 	static const int index = SPREADER_ID;
 	static const bool acceptsHeat = true;
 	static const bool providesHeat = true;
+	static const bool networkable = true;
 	static const void component_setup(function_args& tlocals) noexcept;
 	static const void component_action(function_args& tlocals) noexcept;
 };
@@ -89,6 +92,7 @@ public:
 	static const int index = BOILER_ID;
 	static const bool acceptsHeat = true;
 	static const bool providesHeat = false;
+	static constexpr res_cell heatProduced = -73;
 	static const void component_setup(function_args& tlocals) noexcept;
 	static const void component_action(function_args& tlocals) noexcept;
 };
@@ -113,7 +117,7 @@ const component_func_t component_action_arr[] = {
 
 template<class C>
 constexpr component_properties static_props(){
-	return {C::acceptsHeat,C::providesHeat};
+	return {C::acceptsHeat,C::providesHeat,C::networkable};
 }
 static const component_properties static_properties[] = {
 	static_props<None>(),
@@ -122,3 +126,5 @@ static const component_properties static_properties[] = {
 	static_props<Spreader>(),
 	static_props<Boiler>()
 };
+
+static_assert(array_size(static_properties) == NUM_COMPONENT_TYPES,"component property size doesn't match NUM_COMPONENT_TYPES. check both.");

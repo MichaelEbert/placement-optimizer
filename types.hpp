@@ -1,6 +1,6 @@
 #pragma once
 #include "resourceNetwork.hpp"
-const short NUM_COMPONENT_TYPES = 4;
+const short NUM_COMPONENT_TYPES = 5;
 const short NUM_RESOURCE_TYPES = 2;
 const short GRID_X_SIZE = 3;
 const short GRID_Y_SIZE = 4;
@@ -14,6 +14,7 @@ typedef signed int result_t;//type of result used in genetic algorithm to evalua
 typedef uint8_t adjacency_t;//type of adjacency special grid
 typedef float res_cell;
 
+#include "endpoint.hpp" //fuck this i'll fix it later
 //GRID TYPEDEFS
 //basically instead of doing (instance.field), we want to write field[instance]
 //grids: adjacency special grid, resource grids, property grid 
@@ -21,14 +22,21 @@ typedef float res_cell;
 typedef struct {
 	bool acceptsHeat;
 	bool providesHeat;
+	bool networkable;
 } component_properties;
 
 //localA is for variables that represent something for every type. localB is for whatever scrap you want
 typedef struct {
 	//uint8_t adjComponents[NUM_COMPONENT_TYPES];
-	uint8_t Prop1:1;
-	uint8_t localA;
-	uint8_t localB;
+	union{
+		struct{
+			uint8_t Prop1:1;
+			uint8_t localA;
+			uint8_t localB;
+			uint8_t localC;
+		};
+		void* ptrB;
+	};
 	void* ptrA;
 } LocalVars;
 
@@ -42,7 +50,8 @@ typedef struct{
 	res_cell* energy_g;
 	res_cell* heat_g;
 	LocalVars* locals_g;
-	ResourceNetwork<res_cell> resNet;
+	ResourceNetworkManager<res_cell> resNet;
+	std::vector<Endpoint> endpointList;
 } function_args;
 
 //most functions should take in all variables for use... huh. think about inlining more maybe?

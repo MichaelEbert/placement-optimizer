@@ -29,13 +29,13 @@ FoldOverAllTypes<$RETURN_TYPE,$NAME,$ARGUMENT_TYPE,FoldAdd>(arg);
 //targetFunctor = functor to execute on each element. listOp = how to concatenate each element
 template<typename RetType, template<class> typename targetFunctor, typename ArgType, template<typename,typename,template<class>typename,class...> typename listOp>
 constexpr RetType DoForAllTypes(){
-	return listOp<RetType,ArgType,targetFunctor,None,Spreader,HeatSink,Reactor>::func();
+	return listOp<RetType,ArgType,targetFunctor,None,Spreader,HeatSink,Reactor,Boiler>::func();
 }
 
 //with single argument
 template<typename RetType, template<class> typename targetFunctor, typename ArgType, template<typename,typename,template<class>typename,class...> typename listOp>
 constexpr RetType DoForAllTypes(ArgType arg){
-	return listOp<RetType,ArgType,targetFunctor,None,Spreader,HeatSink,Reactor>::func(arg);
+	return listOp<RetType,ArgType,targetFunctor,None,Spreader,HeatSink,Reactor,Boiler>::func(arg);
 }
 
 //---add concatenator---
