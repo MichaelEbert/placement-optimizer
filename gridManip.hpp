@@ -137,6 +137,7 @@ inline void clear_non_type_grids(function_args& tlocals) noexcept{
 	memset(tlocals.heat_g,0,sizeof(tlocals.heat_g[0])*GRID_SIZE);
 	memset(tlocals.locals_g,0,sizeof(tlocals.locals_g[0])*GRID_SIZE);
 	tlocals.resNet.reset();
+	tlocals.endpointList.clear();
 	return;
 }
 

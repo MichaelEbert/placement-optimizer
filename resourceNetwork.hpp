@@ -68,6 +68,7 @@ void ResourceNetworkManager<T>::joinNetworks(Network<T> a,Network<T> b){
 	numActualNets--;
 }
 
+//reinitialize for new map
 template<typename T>
 void ResourceNetworkManager<T>::reset(){
 	for(int i = 0; i < curMaxNet-1;i++){
@@ -77,5 +78,7 @@ void ResourceNetworkManager<T>::reset(){
 	numActualNets=0;
 	return;
 }
+
+//need to get list of all valid networks.
 
 

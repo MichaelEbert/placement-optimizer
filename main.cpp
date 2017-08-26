@@ -52,6 +52,7 @@ void displayOptimalResult(cell* bestGrid){
 	sim(locals_test);
 	printf("optimal result:\n");
 	printMatrix(bestGrid);
+	printf("score: %d\n",scoreCurrentGrid(locals_test));
 	printf("energy grid:\n");
 	printMatrix(energy_g);
 	printf("heat grid:\n");

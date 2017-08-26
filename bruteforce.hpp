@@ -11,7 +11,7 @@ wu = "work unit"
 */
 namespace threads{
 	const int num_static_slots = 2;//how many spots in the array are we going to specify
-	const int num_threads = 1;
+	const int num_threads = 2;
 	const unsigned int iterations_per_wu = std::pow(NUM_COMPONENT_TYPES,GRID_SIZE-num_static_slots);
 	const unsigned int total_work_units = std::pow(NUM_COMPONENT_TYPES,num_static_slots);
 	constexpr float work_units_per_thread = static_cast<float>(total_work_units)/num_threads;
@@ -58,6 +58,7 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 	int bestSoFar = 0;
 	memset(type_g, 0, GRID_SIZE);
 	//initialize thread stuff
+	printf("thread %d has %u wu.\n",threadnum,threads::wu_to_do(threadnum));
 	unsigned long num_iterations = threads::wu_to_do(threadnum)*threads::iterations_per_wu;
 	for(int i = threads::num_static_slots; i >0; i--){
 		type_g[GRID_SIZE-i] = threads::index_to_wu_value(threadnum,i-1);
@@ -73,6 +74,9 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 			//bestHeat = heatSum;
 			memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
 		}
+		if(i%threads::iterations_per_wu == 0){
+			printf("wu completed on thread %d.\n",threadnum);
+		}
 	}
 	std::copy(std::begin(bestGrid),std::end(bestGrid),threadBestGrid);
 	*threadBestScore = bestSoFar;
@@ -83,15 +87,19 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 std::unique_ptr<cell[]> bruteForce(){
 	std::unique_ptr<cell[]> bestGrid = std::make_unique<cell[]>(GRID_SIZE);
 	
-//	{//user-defined grid instead of brute forcing this
+	{//user-defined grid instead of brute forcing this
 //		cell testGrid[GRID_SIZE] = {
 //					REACTOR_ID,HEATSINK_ID,BOILER_ID,
 //					HEATSINK_ID,BOILER_ID,NONE_ID,
 //					BOILER_ID,NONE_ID,NONE_ID,
 //					0,0,0};
-//		std::copy(std::begin(testGrid),std::end(testGrid),bestGrid.get());
-//	}
-//	return bestGrid;
+		cell testGrid[GRID_SIZE] = {
+					REACTOR_ID,REACTOR_ID,REACTOR_ID,
+					HEATSINK_ID,HEATSINK_ID,HEATSINK_ID,
+					REACTOR_ID,REACTOR_ID,REACTOR_ID};
+		std::copy(std::begin(testGrid),std::end(testGrid),bestGrid.get());
+	}
+	return bestGrid;
 	//------------actual algorithm
 	int bestSoFar = 0;
 	int bestHeat = 0;

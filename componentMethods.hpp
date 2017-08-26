@@ -173,6 +173,16 @@ const void Reactor::component_action(function_args& tlocals) noexcept{
 //-----boiler methods-----
 
 const void Boiler::component_setup(function_args& tlocals) noexcept{
+	//if boiler is next to a heat giver, thats bad.
+	struct getAdjHeatProducers{
+		static void func(function_args& tlocals, gsize_t adjAddress){
+			if(static_properties[tlocals.typegrid[adjAddress]].providesHeat){
+				tlocals.heat_g[tlocals.thisCell]+=Reactor::heatProduced;//hopefully negate this unit.
+			}
+		}
+	};
+	doForAdjacents<getAdjHeatProducers>(tlocals);
+	
 	return;
 }
 const void Boiler::component_action(function_args& tlocals) noexcept{
@@ -217,7 +227,7 @@ result_t scoreCurrentGrid(function_args& tlocals) noexcept{
 	//TODO: remake some way to rank failing designs
 	auto a = heatWorks(tlocals.endpointList,tlocals.resNet);
 	if(a == false){
-		return -static_cast<result_t>(0);
+		return -1;
 	}
 //	//ensure no heat buildup in a single element
 //	res_cell positiveHeat = 0;
