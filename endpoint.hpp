@@ -1,5 +1,6 @@
 #pragma once
 #include <limits>
+#include <set>
 //endpoint stuff
 //heat flows from reactor->heat networks->endpoints.
 //how to tell if component is part of heat network or endpoint? 
@@ -41,46 +42,62 @@ typedef void* endpoint_network_ptr;
 
 class Endpoint {
 	public:
-	std::array<endpoint_network_ptr,4> attachedNetworks;
+	NetworkBitfield attachedNetworks;
 	res_cell unitsAccepted;
-	 Endpoint(res_cell unitsAccepted, void* firstNet, void* secondNet, void* thirdNet, void* fourthNet){
+	Endpoint(res_cell unitsAccepted, NetworkBitfield attachedNets){
 		this->unitsAccepted = unitsAccepted;
-		this->attachedNetworks[0] = firstNet;
-		this->attachedNetworks[1] = secondNet;
-		this->attachedNetworks[2] = thirdNet;
-		this->attachedNetworks[3] = fourthNet;
+		this->attachedNetworks = attachedNets;
 	}
 };
 
-
-
-static void addEndpoint(std::vector<Endpoint>& endpoints, res_cell unitsAccepted, void* firstNet, void* secondNet, void* thirdNet, void* fourthNet){
-	endpoints.emplace_back(unitsAccepted, firstNet, secondNet, thirdNet, fourthNet);
+static void addEndpoint(std::vector<Endpoint>& endpoints, ResourceNetworkManager<res_cell>& resNet, res_cell unitsAccepted, float** firstNet, float** secondNet, float** thirdNet, float** fourthNet){
+	//do some data cleaning:
+	//dereference networks to actual networks
+	//only include actual networks 
+	NetworkBitfield newNets = 0;
+	
+	if(firstNet != nullptr) {
+	newNets|=resNet.networkToBitfield(firstNet);}
+	
+	if(secondNet != nullptr) {
+	newNets|=resNet.networkToBitfield(secondNet);}
+	
+	if(thirdNet != nullptr) {
+	newNets|=resNet.networkToBitfield(thirdNet);}
+	
+	if(fourthNet != nullptr) {
+	newNets|=resNet.networkToBitfield(fourthNet);}
+	
+	//determine if endpoint is already in:
+	auto maybe = std::find_if(std::begin(endpoints),std::end(endpoints),[newNets](const Endpoint& e){return e.attachedNetworks == newNets;});
+	//if not found, add. else add to unitsAccepted.
+	if(maybe == endpoints.end()){
+		endpoints.emplace_back(unitsAccepted, newNets);
+	}
+	else{
+		maybe->unitsAccepted+=unitsAccepted;
+	}
 	return;
 }
 
-//part of the system of equations used to ensure a valid setup.
+//an equation in the system of equations used to ensure a valid setup.
 template<class R>
 class EndpointEquation{
 	public:
 		R unitsAccepted = 0;
-		std::vector<void*> networks; 
+		NetworkBitfield networks;
 		//verify that the target network values do not violate this equation
 		bool verify(const ResourceNetworkManager<R>& resNet){
-			R runningTotal = 0;
-			for(auto n: networks){
-				runningTotal+=resNet.getVal(static_cast<res_cell**>(n));
-			}
+			R runningTotal = resNet.sumNetworkBitfield(networks);
 			return (runningTotal + unitsAccepted) < 0;
 		}
 		EndpointEquation(Endpoint& targ, std::vector<Endpoint>& endpoints);
-		EndpointEquation(void* singleTarg, std::vector<Endpoint>& endpoints);
+		EndpointEquation(NetworkBitfield singleTarg, std::vector<Endpoint>& endpoints);
 	private:
 	addValidToAccepted(std::vector<Endpoint>& endpoints){
 		for(auto e: endpoints){
-				auto shouldAdd = std::find_first_of(std::begin(e.attachedNetworks),std::end(e.attachedNetworks),
-				                                   std::begin(networks),std::end(networks));
-				if(shouldAdd != e.attachedNetworks.end()){
+				auto shouldAdd = networks & e.attachedNetworks;
+				if(shouldAdd){
 					unitsAccepted+=e.unitsAccepted;
 				}
 			}
@@ -90,18 +107,14 @@ class EndpointEquation{
 
 template<class R>
 EndpointEquation<R>::EndpointEquation(Endpoint& targ, std::vector<Endpoint>& endpoints){
-	for(auto& n: targ.attachedNetworks){
-		if(n != nullptr){
-			networks.emplace_back(n);
-		}
-	}
+	networks = targ.attachedNetworks;
 	addValidToAccepted(endpoints);
 	return;
 }
 
 template<class R>
-EndpointEquation<R>::EndpointEquation(void* singleTarg, std::vector<Endpoint>& endpoints){
-	networks.emplace_back(singleTarg);
+EndpointEquation<R>::EndpointEquation(NetworkBitfield singleTarg, std::vector<Endpoint>& endpoints){
+	networks = singleTarg;
 	addValidToAccepted(endpoints);
 	return;
 }
@@ -110,34 +123,14 @@ bool heatWorks(std::vector<Endpoint>& endpoints, ResourceNetworkManager<res_cell
 	//for each boiler network combination:
 	//1.total up each networks maximum heat
 	//2.total up each combination of networks maximum heat
-//	unsigned short maxHeat[16];
-//	//1:
-//	//in SSE:
-//	//LSHIFT,
-//	//PBLENDVB,
-//	//PADDW
-//	for(int networkNum = 0; networkNum < 16; networkNum++){
-//		unsigned short scratch = 0;
-//		for(j in 1..16){
-//			auto shouldCountThisBoiler = (bflags[j]<<networkNum);
-//			if(shouldCountThisBoiler & 0x8000){//high bit set
-//				scratch+=boilerHeat[j];
-//			}
-//		}
-//		maxHeat[networkNum] = scratch;
-//	}
-//	//2:
-//	for(auto refFlags: bflags){
-//		for(int b = 0; b < 16; b++){
-//			auto temp = bflags[b] & refFlags;
-//			temp = (!temp)-1;//temp is now 0 if no refFlags, -1 if at least one refFlag was on
-//			temp = temp & boilerHeat[b];
-//		}
-//		heat[refFlags] = temp;
-//	}
 
 	std::vector<EndpointEquation<res_cell> > equations;
-	//TODO: single variable equations
+
+	auto actualNets = resNet.getValidNetworks();
+	for(auto& net: actualNets){
+		equations.emplace_back(resNet.networkToBitfield(net),endpoints);
+	}
+	
 	for(auto& ep: endpoints){
 		equations.emplace_back(ep,endpoints);
 	}

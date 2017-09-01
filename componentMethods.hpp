@@ -36,16 +36,7 @@ struct doProvideHeat{
 //	}
 //};
 
-//if adjacent component is part of a network, set this to be part of the same network
-struct propagateNetwork{
-	static void func(function_args& tlocals, gsize_t adjAddress){
-		if(static_properties[tlocals.typegrid[adjAddress]].networkable){
-			if(tlocals.locals_g[adjAddress].ptrA != nullptr){
-				tlocals.locals_g[tlocals.thisCell].ptrA = tlocals.locals_g[adjAddress].ptrA;
-			}
-		}
-	}
-};
+
 
 //-----Component methods-----
 const void Component::component_setup(function_args& tlocals) noexcept{
@@ -63,9 +54,22 @@ const void None::component_setup(function_args& tlocals) noexcept{
 
 //-----Spreader methods-----
 const void Spreader::component_setup(function_args& tlocals) noexcept{
-	doForAdjacents<propagateNetwork>(tlocals);
-	if(tlocals.locals_g[tlocals.thisCell].ptrA == 0){
-		tlocals.locals_g[tlocals.thisCell].ptrA = tlocals.resNet.newNetwork();
+	//if adjacent component ACCEPTS heat and is part of a network, set this to be part of the same network.
+	//if we encounter 2 adjacent networks, join them.
+	struct spreaderAcquireNetwork{
+		static void func(function_args& tlocals, gsize_t adjAddress){
+			auto& thisLocals = tlocals.locals_g[tlocals.thisCell];
+			auto& thatLocals = tlocals.locals_g[adjAddress];
+			if(static_properties[tlocals.typegrid[adjAddress]].acceptsHeat && thatLocals.netPtr != nullptr){
+				//todo: check if doing this is faster than if(this)then{join(this,that)}else{this=that}
+				tlocals.resNet.joinNetworks(static_cast<float**>(thisLocals.netPtr),static_cast<float**>(thatLocals.netPtr));
+				thisLocals.netPtr = thatLocals.netPtr;
+			}
+		}
+	};
+	doForAdjacents<spreaderAcquireNetwork>(tlocals);
+	if(tlocals.locals_g[tlocals.thisCell].netPtr == 0){
+		tlocals.locals_g[tlocals.thisCell].netPtr = tlocals.resNet.newNetwork();
 	}
 }
 //assume that at this point, the network is created and working perfectly.
@@ -75,18 +79,18 @@ const void Spreader::component_action(function_args& tlocals) noexcept{
 			auto type = tlocals.typegrid[adjAddress];
 			auto providesHeat = static_properties[type].providesHeat;
 			auto acceptsHeat = static_properties[type].acceptsHeat;
-			auto thisPtrA = tlocals.locals_g[tlocals.thisCell].ptrA;
-			auto otherPtrA = tlocals.locals_g[adjAddress].ptrA;
+			auto thisNet = tlocals.locals_g[tlocals.thisCell].netPtr;
+			auto otherNet = tlocals.locals_g[adjAddress].netPtr;
 			
-			if(providesHeat && (thisPtrA != otherPtrA)){
+			if(providesHeat && (thisNet != otherNet)){
 				//add heat to this network
 				auto heatToAdd = static_cast<res_cell>(tlocals.locals_g[adjAddress].localB)/static_cast<res_cell>(tlocals.locals_g[adjAddress].localA);
-				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].ptrA)+=heatToAdd;
+				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
 			}
-			else if(acceptsHeat && (thisPtrA != otherPtrA)){
+			else if(acceptsHeat && (thisNet != otherNet)){
 				//erk. need to fix somehow.
 				auto heatToAdd = static_cast<res_cell>(tlocals.heat_g[adjAddress]);
-				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].ptrA)+=heatToAdd;
+				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
 				tlocals.heat_g[adjAddress] = 0;
 			}
 		}
@@ -98,21 +102,24 @@ const void Spreader::component_action(function_args& tlocals) noexcept{
 
 //-----HeatSink methods-----
 const void HeatSink::component_setup(function_args& tlocals) noexcept{
-	struct acceptNetwork{
+	//if adj component PROVIDES heat and is part of a network, add this to that network.
+	//join networks if needed.
+	struct sinkAcquireNetwork{
 		static void func(function_args& tlocals, gsize_t adjAddress){
-			if(tlocals.typegrid[adjAddress] == SPREADER_ID){
-				if(tlocals.locals_g[adjAddress].ptrA != nullptr){
-					tlocals.locals_g[tlocals.thisCell].ptrA = tlocals.locals_g[adjAddress].ptrA;
-				}
+			auto& thisLocals = tlocals.locals_g[tlocals.thisCell];
+			auto& thatLocals = tlocals.locals_g[adjAddress];
+			
+			if(static_properties[tlocals.typegrid[adjAddress]].providesHeat && thatLocals.netPtr != nullptr){
+				tlocals.resNet.joinNetworks(static_cast<float**>(thisLocals.netPtr),static_cast<float**>(thatLocals.netPtr));
+				thisLocals.netPtr = thatLocals.netPtr;
 			}
 		}
 	};
 	
-	Component::component_setup(tlocals);
-
-	doForAdjacents<acceptNetwork>(tlocals);
-	if(tlocals.locals_g[tlocals.thisCell].ptrA == 0){
-		tlocals.locals_g[tlocals.thisCell].ptrA = tlocals.resNet.newNetwork();
+	//Component::component_setup(tlocals);
+	doForAdjacents<sinkAcquireNetwork>(tlocals);
+	if(tlocals.locals_g[tlocals.thisCell].netPtr == 0){
+		tlocals.locals_g[tlocals.thisCell].netPtr = tlocals.resNet.newNetwork();
 	}
 	tlocals.heat_g[tlocals.thisCell] = HeatSink::heatProduced;
 }
@@ -122,17 +129,18 @@ const void HeatSink::component_action(function_args& tlocals) noexcept{
 			auto type = tlocals.typegrid[adjAddress];
 			auto providesHeat = static_properties[type].providesHeat;
 			auto acceptsHeat = static_properties[type].acceptsHeat;
-			auto thisPtrA = tlocals.locals_g[tlocals.thisCell].ptrA;
-			auto otherPtrA = tlocals.locals_g[adjAddress].ptrA;
+			auto thisnetPtr = tlocals.locals_g[tlocals.thisCell].netPtr;
+			auto othernetPtr = tlocals.locals_g[adjAddress].netPtr;
 			
-			if(providesHeat && (thisPtrA != otherPtrA)){
+			if(providesHeat && (thisnetPtr != othernetPtr)){
 				//add heat to this network
 				auto heatToAdd = static_cast<res_cell>(tlocals.locals_g[adjAddress].localB)/static_cast<res_cell>(tlocals.locals_g[adjAddress].localA);
-				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].ptrA)+=heatToAdd;
+				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
 			}
 		}
 	};
 	doForAdjacents<sinkAdjacentAction>(tlocals);
+	**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=HeatSink::heatProduced;
 	return;
 }
 
@@ -191,10 +199,10 @@ const void Boiler::component_action(function_args& tlocals) noexcept{
 		static void func(function_args& tlocals, gsize_t adjAddress){
 			auto adjType = tlocals.typegrid[adjAddress];
 			if(static_properties[adjType].networkable){
-				auto& targetA = tlocals.locals_g[adjAddress].ptrA;
+				auto& targetA = tlocals.locals_g[adjAddress].netPtr;
 				if(targetA != nullptr){
-					if(tlocals.locals_g[tlocals.thisCell].ptrA == 0){
-						tlocals.locals_g[tlocals.thisCell].ptrA = targetA;
+					if(tlocals.locals_g[tlocals.thisCell].netPtr == 0){
+						tlocals.locals_g[tlocals.thisCell].netPtr = targetA;
 					}
 					else{
 						tlocals.locals_g[tlocals.thisCell].ptrB = targetA;
@@ -208,7 +216,7 @@ const void Boiler::component_action(function_args& tlocals) noexcept{
 	doForAdjacents<getTwoPointerLocs>(tlocals);
 	auto mylocals = tlocals.locals_g[tlocals.thisCell];
 	
-	addEndpoint(tlocals.endpointList,Boiler::heatProduced,mylocals.ptrA,mylocals.ptrB,0,0);
+	addEndpoint(tlocals.endpointList,tlocals.resNet,Boiler::heatProduced,static_cast<float**>(mylocals.netPtr),static_cast<float**>(mylocals.ptrB),nullptr,nullptr);
 	//if adj is heatsink, subtract X energy.
 	return;
 }

@@ -59,7 +59,8 @@ void displayOptimalResult(cell* bestGrid){
 	printMatrix(heat_g);
 	printf("locals grid:\n");
 	printMatrix(locals_g);
-	
+	printf("network info:\n");
+	locals_test.resNet.printDebugInfo();
 	return;
 }
 	

@@ -11,7 +11,7 @@ wu = "work unit"
 */
 namespace threads{
 	const int num_static_slots = 2;//how many spots in the array are we going to specify
-	const int num_threads = 2;
+	const int num_threads = 6;
 	const unsigned int iterations_per_wu = std::pow(NUM_COMPONENT_TYPES,GRID_SIZE-num_static_slots);
 	const unsigned int total_work_units = std::pow(NUM_COMPONENT_TYPES,num_static_slots);
 	constexpr float work_units_per_thread = static_cast<float>(total_work_units)/num_threads;
@@ -87,19 +87,19 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 std::unique_ptr<cell[]> bruteForce(){
 	std::unique_ptr<cell[]> bestGrid = std::make_unique<cell[]>(GRID_SIZE);
 	
-	{//user-defined grid instead of brute forcing this
+//	{//user-defined grid instead of brute forcing this
+////		cell testGrid[GRID_SIZE] = {
+////					REACTOR_ID,HEATSINK_ID,BOILER_ID,
+////					HEATSINK_ID,BOILER_ID,NONE_ID,
+////					BOILER_ID,NONE_ID,NONE_ID,
+////					0,0,0};
 //		cell testGrid[GRID_SIZE] = {
-//					REACTOR_ID,HEATSINK_ID,BOILER_ID,
-//					HEATSINK_ID,BOILER_ID,NONE_ID,
-//					BOILER_ID,NONE_ID,NONE_ID,
-//					0,0,0};
-		cell testGrid[GRID_SIZE] = {
-					REACTOR_ID,REACTOR_ID,REACTOR_ID,
-					HEATSINK_ID,HEATSINK_ID,HEATSINK_ID,
-					REACTOR_ID,REACTOR_ID,REACTOR_ID};
-		std::copy(std::begin(testGrid),std::end(testGrid),bestGrid.get());
-	}
-	return bestGrid;
+//					REACTOR_ID,HEATSINK_ID,REACTOR_ID,
+//					SPREADER_ID,SPREADER_ID,REACTOR_ID,
+//					REACTOR_ID,REACTOR_ID,NONE_ID};
+//		std::copy(std::begin(testGrid),std::end(testGrid),bestGrid.get());
+//	}
+//	return bestGrid;
 	//------------actual algorithm
 	int bestSoFar = 0;
 	int bestHeat = 0;
@@ -113,14 +113,19 @@ std::unique_ptr<cell[]> bruteForce(){
 	
 	unsigned long num_iterations = (threads::wu_to_do(0)+1)*threads::iterations_per_wu;
 	printf("iterations: %u (expected time %2f seconds +- 50%%)\n",num_iterations,num_iterations/4000000.0f);
-
+	printf("%u iterations per work unit.\n",threads::iterations_per_wu);
 	//split into threads and work
-	std::vector<std::thread> workThreads;
-	for(int i = 0; i < threads::num_threads; i++){
-		workThreads.emplace_back(std::thread(bruteForceWork,i,threadBestGrid[i],&threadBestScore[i]));
+	if(threads::num_threads>1){
+		std::vector<std::thread> workThreads;
+		for(int i = 0; i < threads::num_threads; i++){
+			workThreads.emplace_back(std::thread(bruteForceWork,i,threadBestGrid[i],&threadBestScore[i]));
+		}
+		for(auto& thread:workThreads){
+			thread.join();
+		}
 	}
-	for(auto& thread:workThreads){
-		thread.join();
+	else{
+		bruteForceWork(0,threadBestGrid[0],&threadBestScore[0]);
 	}
 	
 	//compute best result from all threads

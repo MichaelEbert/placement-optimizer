@@ -37,7 +37,7 @@ typedef struct {
 		};
 		void* ptrB;
 	};
-	void* ptrA;
+	void* netPtr;
 } LocalVars;
 
 

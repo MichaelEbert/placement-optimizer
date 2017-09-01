@@ -32,9 +32,24 @@ class Wagon:public FarmThing{
 	int legs = 6;
 	static const bool constLegs=false;
 };
+//scratch
+class Endpoint {
+	public:
+	uint32_t attachedNetworks;
+	float unitsAccepted;
+	Endpoint(float unitsAccepted, uint32_t attachedNets){
+		this->unitsAccepted = unitsAccepted;
+		this->attachedNetworks = attachedNets;
+	}
+};
+
+struct EndStruct{
+	uint32_t an;
+	float ua;
+};
 
 int main(int argc, char** argv){
-	printf("%d",(argc==4)+1);
+	printf("%d,%d",sizeof(Endpoint),sizeof(EndStruct));
 	return 0;
 //	Cow c;
 //	Wagon w;

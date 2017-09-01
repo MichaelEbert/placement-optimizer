@@ -27,9 +27,9 @@ CommandLine=islandlayout.txt
 Folders=
 IncludeVersionInfo=0
 SupportXPThemes=0
-CompilerSet=0
-CompilerSettings=00000fc0g0000000000000000
-UnitCount=13
+CompilerSet=1
+CompilerSettings=0000000000000000001000000
+UnitCount=14
 
 [VersionInfo]
 Major=1
@@ -171,6 +171,16 @@ BuildCmd=
 
 [Unit13]
 FileName=componentMethods.hpp
+CompileCpp=1
+Folder=
+Compile=1
+Link=1
+Priority=1000
+OverrideBuildCmd=0
+BuildCmd=
+
+[Unit14]
+FileName=endpoint.hpp
 CompileCpp=1
 Folder=
 Compile=1

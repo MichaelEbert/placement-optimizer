@@ -14,7 +14,12 @@ testing to see if i can implement this better in a class.
 //need double pointer so we can move around the single pointers behind the scenes to point to different slots
 
 const int MAX_NETWORKS = 16;
+
+//use a bitfield for certain network operations as it's optimal for sorting and comparisons.
+typedef uint32_t NetworkBitfield;
+static_assert(MAX_NETWORKS<sizeof(NetworkBitfield)*8,"NetworkBitfield not large enough to store all networks.Decrease maximum networks or increase NetworkBitfield size.\n");
 //const int DIRECT_CONNECTED_NETWORKS = 4;//adjust for performance? -need to actually create a constructor and use it first
+
 
 //resource network for resource of type T
 template<typename T>
@@ -29,10 +34,15 @@ class ResourceNetworkManager{
 		T getVal(Network<T> a) const{
 			return **a;
 		}
-		
+		int numActualNets = 0;
+		std::vector<Network<T> > getValidNetworks();
+		NetworkBitfield networkToBitfield(Network<T> a){
+			return 1<<(*a-values);
+		}
+		T sumNetworkBitfield(NetworkBitfield networks) const;
+		void printDebugInfo();
 	private:
 		int curMaxNet = 0;
-		int numActualNets = 0;
 		T* networks[MAX_NETWORKS];
 		std::vector<Network<T> > valueNetworkLists[MAX_NETWORKS];
 		T values[MAX_NETWORKS];
@@ -50,17 +60,17 @@ Network<T> ResourceNetworkManager<T>::newNetwork(){
 	return &networks[curMaxNet++];
 }
 
-//join network B to network A
+//join network B to network A. b or a can be null (is better to check for null here or before call?)
 template<typename T>
 void ResourceNetworkManager<T>::joinNetworks(Network<T> a,Network<T> b){
-	if(*b==*a){
+	if(a == nullptr || b == nullptr || *b==*a){
 		return;
 	}
 	
 	auto bValueIndex = (*b)-values;
 	auto aValueIndex = (*a)-values;
-	auto listA = valueNetworkLists[aValueIndex];
-	auto listB = valueNetworkLists[bValueIndex];
+	auto& listA = valueNetworkLists[aValueIndex];
+	auto& listB = valueNetworkLists[bValueIndex];
 	for(auto net:listB){
 		*net = *a;
 	}
@@ -74,11 +84,54 @@ void ResourceNetworkManager<T>::reset(){
 	for(int i = 0; i < curMaxNet-1;i++){
 		valueNetworkLists[i].clear();
 	}
+	for(int i = 0; i < MAX_NETWORKS; i++){
+		values[i] = 0;
+	}
 	curMaxNet=0;
 	numActualNets=0;
 	return;
 }
 
 //need to get list of all valid networks.
+template<typename T>
+std::vector<Network<T> > ResourceNetworkManager<T>::getValidNetworks(){
+	std::vector<Network<T> > temp;
+	temp.reserve(numActualNets);
+	for(int i = 0; i < curMaxNet; i++){
+		if(networks[i] == &values[i]){
+			temp.emplace_back(&(networks[i]));
+		}
+	}
+	return temp;
+}
 
+//get the sum of the networks represented in the bitfield
+template<typename T>
+T ResourceNetworkManager<T>::sumNetworkBitfield(NetworkBitfield networks) const{
+	T sum = 0;
+	for(int i = 0; i < curMaxNet; i++){
+		if(networks & 1<<i){
+			sum += values[i];
+		}
+	}
+	return sum;
+}
+
+template<typename T>
+void ResourceNetworkManager<T>::printDebugInfo(){
+	printf("MaxNetsUsed: %d\nValsUsed: %d\n",curMaxNet,numActualNets);
+	printf("#:Netwk\t\tPtsTo\t\tvalAdr\tvalue\n");
+	for(int i = 0;  i < curMaxNet; i++){
+		printf("%d:%x\t%x\t\t%x\t%d\n",i,&networks[i], networks[i], &values[i], values[i]);
+	}
+}
+
+template<>
+void ResourceNetworkManager<float>::printDebugInfo(){
+	printf("MaxNetsUsed: %d\nValsUsed: %d\n",curMaxNet,numActualNets);
+	printf("#:Netwk\t\tPtsTo\t\tvalAdr\tvalue\n");
+	for(int i = 0;  i < curMaxNet; i++){
+		printf("%d:%x\t%x\t\t%x\t%f\n",i,&networks[i], networks[i], &values[i], values[i]);
+	}
+}
 
