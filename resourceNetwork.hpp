@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "fastlist.hpp"
 /*
 this file implements resource networks -
 some resources are better simulated as a single value spread across multiple components -
@@ -12,6 +13,11 @@ testing to see if i can implement this better in a class.
 */
 
 //need double pointer so we can move around the single pointers behind the scenes to point to different slots
+
+
+//vector<> code takes an absurd amount of time to run, so I get to roll my own.
+
+
 
 const int MAX_NETWORKS = 16;
 
@@ -41,6 +47,12 @@ class ResourceNetworkManager{
 		}
 		T sumNetworkBitfield(NetworkBitfield networks) const;
 		void printDebugInfo();
+		ResourceNetworkManager(){
+			return;
+		}
+		~ResourceNetworkManager(){
+			return;
+		}
 	private:
 		int curMaxNet = 0;
 		T* networks[MAX_NETWORKS];
@@ -74,7 +86,7 @@ void ResourceNetworkManager<T>::joinNetworks(Network<T> a,Network<T> b){
 	for(auto net:listB){
 		*net = *a;
 	}
-	listA.insert(listA.end(),listB.begin(),listB.end());
+	/*listA.addAll(listB);*/listA.insert(listA.end(),listB.begin(),listB.end());
 	numActualNets--;
 }
 
@@ -122,7 +134,7 @@ void ResourceNetworkManager<T>::printDebugInfo(){
 	printf("MaxNetsUsed: %d\nValsUsed: %d\n",curMaxNet,numActualNets);
 	printf("#:Netwk\t\tPtsTo\t\tvalAdr\tvalue\n");
 	for(int i = 0;  i < curMaxNet; i++){
-		printf("%d:%x\t%x\t\t%x\t%d\n",i,&networks[i], networks[i], &values[i], values[i]);
+		printf("%d:%p\t%p\t\t%p\t%d\n",i,&networks[i], networks[i], &values[i], values[i]);
 	}
 }
 
@@ -131,7 +143,7 @@ void ResourceNetworkManager<float>::printDebugInfo(){
 	printf("MaxNetsUsed: %d\nValsUsed: %d\n",curMaxNet,numActualNets);
 	printf("#:Netwk\t\tPtsTo\t\tvalAdr\tvalue\n");
 	for(int i = 0;  i < curMaxNet; i++){
-		printf("%d:%x\t%x\t\t%x\t%f\n",i,&networks[i], networks[i], &values[i], values[i]);
+		printf("%d:%p\t%p\t\t%p\t%f\n",i,&networks[i], networks[i], &values[i], values[i]);
 	}
 }
 

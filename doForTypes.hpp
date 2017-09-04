@@ -75,6 +75,6 @@ struct FoldAdd<ResultType,ArgType,Functor,Penultimate,Last>{
 namespace FoldValidation{
 template<typename ResultType,typename ArgType, template<class> class Functor, class First, class... Types>
 struct CountNumTypes{static constexpr int func(){return 1+sizeof...(Types);}};
-template<typename ComponentType> struct cnt{constexpr int func(){return 0;}};
+template<typename ComponentType> struct cnt{constexpr int func() const{return 0;}};
 static_assert(DoForAllTypes<int,cnt,void,CountNumTypes>() == NUM_COMPONENT_TYPES,"FoldOverAllTypes() has an incorrect amount of types");
 }

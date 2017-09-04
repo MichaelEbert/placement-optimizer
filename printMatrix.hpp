@@ -65,7 +65,7 @@ int printMatrix(LocalVars* matrix) noexcept
 	printf("netPtr:\n");
 	for(int i = 0; i < GRID_Y_SIZE; i++){
 		for(int j = 0; j < GRID_X_SIZE; j++){
-			printf("%X\t", matrix[cell_linear_offset(j,i)].netPtr);
+			printf("%p\t", matrix[cell_linear_offset(j,i)].netPtr);
 		}
 		printf("\n");
 	}

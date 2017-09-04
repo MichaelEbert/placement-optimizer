@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
 #include <algorithm>
-
+#include <numeric>
 #include "genetic_types.hpp"
 
 
@@ -33,6 +33,10 @@ void seed(){
     rng.seed(std::random_device()());
     candidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*POP_SIZE));
     newCandidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*POP_SIZE));
+	if (!candidates || !newCandidates) {
+		printf("Out of memory. Terminating.\n");
+		exit(ENOMEM);
+	}
     for(unsigned int i = 0; i < POP_SIZE; i++){
     	cell* curCandidate = candidates+(i*GRID_SIZE);
     	for(gsize_t c = 0; c < GRID_SIZE; c++){

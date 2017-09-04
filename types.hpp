@@ -2,7 +2,7 @@
 #include "resourceNetwork.hpp"
 const short NUM_COMPONENT_TYPES = 5;
 const short NUM_RESOURCE_TYPES = 2;
-const short GRID_X_SIZE = 3;
+const short GRID_X_SIZE = 4;
 const short GRID_Y_SIZE = 3;
 
 const int GRID_SIZE = GRID_X_SIZE*GRID_Y_SIZE;
@@ -58,12 +58,19 @@ typedef struct{
 //function example declaration: func(gsize_t thisCell, grid typegrid, adjacency_t* adjacency_sg)
 typedef const void (*component_func_t)(function_args&);
 
-template <typename T,size_t N>
-constexpr size_t array_size(T(&)[N]){
-	return N;
-}
-
 #define COUNT_SIMS true
 const unsigned long ONE_BILLION = 1000000000;
 unsigned long count_sims_low = 0;
 unsigned long count_sims_high = 0;
+
+
+//misc helper functions
+template <typename T, size_t N>
+constexpr size_t array_size(T(&)[N]) {
+	return N;
+}
+
+template<typename T>
+constexpr T const_pow(T base, T exp) {
+	return exp == 0 ? 1 : base * const_pow(base, exp - 1);
+}

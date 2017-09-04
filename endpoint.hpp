@@ -94,7 +94,7 @@ class EndpointEquation{
 		EndpointEquation(Endpoint& targ, std::vector<Endpoint>& endpoints);
 		EndpointEquation(NetworkBitfield singleTarg, std::vector<Endpoint>& endpoints);
 	private:
-	addValidToAccepted(std::vector<Endpoint>& endpoints){
+	void addValidToAccepted(std::vector<Endpoint>& endpoints){
 		for(auto e: endpoints){
 				auto shouldAdd = networks & e.attachedNetworks;
 				if(shouldAdd){
@@ -125,7 +125,7 @@ bool heatWorks(std::vector<Endpoint>& endpoints, ResourceNetworkManager<res_cell
 	//2.total up each combination of networks maximum heat
 
 	std::vector<EndpointEquation<res_cell> > equations;
-
+	equations.reserve(resNet.numActualNets + endpoints.size());
 	auto actualNets = resNet.getValidNetworks();
 	for(auto& net: actualNets){
 		equations.emplace_back(resNet.networkToBitfield(net),endpoints);
@@ -136,7 +136,7 @@ bool heatWorks(std::vector<Endpoint>& endpoints, ResourceNetworkManager<res_cell
 	}
 	
 	
-	bool works = std::all_of(equations.begin(), equations.end(),[resNet](EndpointEquation<res_cell>& a){return a.verify(resNet);});
+	bool works = std::all_of(equations.begin(), equations.end(),[&resNet](EndpointEquation<res_cell>& a){return a.verify(resNet);});
 	
 	return works;
 }

@@ -16,14 +16,10 @@ types.hpp->components.hpp->doForTypes.hpp->gridManip.hpp->componentMethods.hpp->
 */
 
 //#include "gridManip_after.hpp"
+#include "types.hpp"
 #include "genetic.hpp"
 #include "printMatrix.hpp"
 #include "bruteforce.hpp"
-
-int calcEfficiency(std::vector<std::vector<int>> matrix);
-
-
-constexpr unsigned long brute_force_iterations = std::pow(NUM_COMPONENT_TYPES, (GRID_SIZE-1));
 
 void printResultsToFile(int topa,int topb,int topc,char* filename){
 	auto file = fopen(filename,"ab");
