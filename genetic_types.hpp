@@ -10,18 +10,17 @@ std::uniform_real_distribution<float> randFloat(0,1);
 std::exponential_distribution<float> randExpFloat(2);
 //use: randType(rng) to return a random component type.
 
-
-const unsigned int POP_SIZE = 500;//population size
-const unsigned int NUM_GENERATIONS = 1000;//how many generations should we simulate 
-const float MUTATION_CHANCE = 0.55f;
-const int TOP_PARENTS_RESERVED_SLOTS = 20;//the top n parents will be copied into the next generation
-
+namespace genetic{
+	const unsigned int POP_SIZE = 500;//population size
+	const unsigned int NUM_GENERATIONS = 1000;//how many generations should we simulate 
+	const float MUTATION_CHANCE = 0.55f;
+	const int TOP_PARENTS_RESERVED_SLOTS = 20;//the top n parents will be copied into the next generation
+	const int numThreads = 6;
+}
 typedef struct{
 	int index;
 	result_t result;
 } Ranking;
-
-std::array<Ranking,POP_SIZE> popRankings;
 
 //reverse sort - biggest first
 bool rankingSort(const Ranking& a, const Ranking& b){return a.result > b.result;}

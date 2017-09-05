@@ -5,6 +5,7 @@
 #include <algorithm>
 #include "gridManip_after.hpp"
 #include "types.hpp"
+#include "simTiming.hpp"
 //brute force method
 
 /*
@@ -12,7 +13,7 @@ multithreading strategy:
 divide up the work by having each thread have the last N components in the array be fixed. (for some value of N, for even enough computation) 
 wu = "work unit"
 */
-namespace threads{
+namespace brute_threading{
 	const unsigned int num_static_slots = 2;//how many spots in the array are we going to specify
 	const unsigned int num_threads = 6;
 	const unsigned int iterations_per_wu = const_pow<unsigned int>(NUM_COMPONENT_TYPES,GRID_SIZE-num_static_slots);
@@ -39,67 +40,7 @@ namespace threads{
 	}
 }
 
-//returns expected time to do 1 wu.
-double getTimingInfo(){
-	printf("running timing tests...\n");
-	//thread-local grids
-	cell type_g[GRID_SIZE];
-	adjacency_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
-	res_cell energy_g[GRID_SIZE];
-	res_cell heat_g[GRID_SIZE];
-	LocalVars locals_g[GRID_SIZE];
-	ResourceNetworkManager<res_cell> resNet;
-	
-	function_args locals_test;
-	locals_test.thisCell = 0;
-	locals_test.typegrid = type_g;
-	locals_test.adjacency_sg = adjacency_sg;
-	locals_test.energy_g = energy_g;
-	locals_test.heat_g = heat_g;
-	locals_test.locals_g = locals_g;
-	locals_test.resNet = resNet;
-	
-	memset(type_g, 0, GRID_SIZE);
-	
-	//get into a middle state
-	for(int i = 0; i < std::max(1,NUM_COMPONENT_TYPES*GRID_SIZE-4); i++){
-		increment_grid(locals_test);
-	}
-	int bestSoFar = 0;
-	
-	//time 100 iterations
-	
-	int iterations = 16;
-	unsigned int diffms = 0;
-	//keep simming until we get a 500ms run
-	while(diffms < 500){
-		iterations = iterations*4;
-		auto start = std::chrono::steady_clock::now();
-		for (int i = 0; i < iterations; i++){
-			increment_grid(locals_test);
-			sim(locals_test);
-			auto thisSum = scoreCurrentGrid(locals_test);
-			if(thisSum > bestSoFar){
-				bestSoFar = thisSum;
-			}
-		}
-		auto end = std::chrono::steady_clock::now();
-		diffms = std::chrono::duration_cast<std::chrono::milliseconds>(end-start).count();
-	}
-	printf("%i\n",bestSoFar);
-	printf("timing test finished (%u ms).\n",diffms);
-	//printf("(%i simulations in %u ms)\n",iterations, diffms);
-	
-	double timePerIteration = static_cast<double>(diffms)/iterations;//in ms
-	double timePerWu = timePerIteration * threads::iterations_per_wu;//in ms
-	double expectedTime = timePerWu*threads::total_work_units/threads::num_threads/1000;//in seconds
-	printf("expected time to complete: %2.0f seconds",expectedTime);
-	if(expectedTime > 300){
-		printf(" (%2.1f minutes)",expectedTime/60);
-	}
-	printf("\n\n");
-	return timePerWu;
-}
+
 
 void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 	cell bestGrid[GRID_SIZE];
@@ -123,14 +64,14 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 	int bestSoFar = 0;
 	memset(type_g, 0, GRID_SIZE);
 	//initialize thread stuff
-	printf("thread %d has %u wu.\n",threadnum,threads::wu_to_do(threadnum));
-	for(int i = threads::num_static_slots; i >0; i--){
-		type_g[GRID_SIZE-i] = threads::index_to_wu_value(threadnum,i-1);
+	printf("thread %d has %u wu.\n",threadnum, brute_threading::wu_to_do(threadnum));
+	for(int i = brute_threading::num_static_slots; i >0; i--){
+		type_g[GRID_SIZE-i] = brute_threading::index_to_wu_value(threadnum,i-1);
 	}
 	
-	unsigned long num_iterations = threads::wu_to_do(threadnum)*threads::iterations_per_wu;
-	for(unsigned int wu = 0; wu < threads::wu_to_do(threadnum);wu++){
-		for(unsigned long i = 0; i < threads::iterations_per_wu; i++){
+	unsigned long num_iterations = brute_threading::wu_to_do(threadnum)*brute_threading::iterations_per_wu;
+	for(int wu = 0; wu < brute_threading::wu_to_do(threadnum);wu++){
+		for(unsigned long i = 0; i < brute_threading::iterations_per_wu; i++){
 			increment_grid(locals_test);
 			sim(locals_test);
 			int thisSum = scoreCurrentGrid(locals_test);
@@ -186,10 +127,10 @@ std::unique_ptr<cell[]> bruteForce(){
 	
 	int bestSoFar = 0;
 	int bestHeat = 0;
-	cell* threadBestGrid[threads::num_threads];
-	int threadBestScore[threads::num_threads];
+	cell* threadBestGrid[brute_threading::num_threads];
+	int threadBestScore[brute_threading::num_threads];
 	
-	for(int i = 0; i < threads::num_threads; i++){
+	for(int i = 0; i < brute_threading::num_threads; i++){
 		threadBestGrid[i] = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE));
 		if (threadBestGrid[i] == nullptr) {
 			printf("Out of memory. Terminating.\n");
@@ -198,13 +139,20 @@ std::unique_ptr<cell[]> bruteForce(){
 		memset(threadBestGrid[i],0,sizeof(cell)*GRID_SIZE);
 	}
 	
-	getTimingInfo();
+	double timePerIteration = getTimingInfo();
+	double timePerWu = timePerIteration * brute_threading::iterations_per_wu;//in ms
+	double expectedTime = timePerWu*brute_threading::total_work_units / brute_threading::num_threads / 1000;//in seconds
+	printf("expected time to complete: %2.0f seconds", expectedTime);
+	if (expectedTime > 300) {
+		printf(" (%2.1f minutes)", expectedTime / 60);
+	}
+	printf("\n\n");
 
 	//printf("%u iterations per work unit.\n",threads::iterations_per_wu);
 	//split into threads and work
-	if(threads::num_threads>1){
+	if(brute_threading::num_threads>1){
 		std::vector<std::thread> workThreads;
-		for(int i = 0; i < threads::num_threads; i++){
+		for(int i = 0; i < brute_threading::num_threads; i++){
 			workThreads.emplace_back(std::thread(bruteForceWork,i,threadBestGrid[i],&threadBestScore[i]));
 		}
 		for(auto& thread:workThreads){
@@ -222,7 +170,7 @@ std::unique_ptr<cell[]> bruteForce(){
 	
 	printf("best score: %d\n",*maxElementIt);
 	
-	for(int i = 0; i < threads::num_threads; i++){
+	for(int i = 0; i < brute_threading::num_threads; i++){
 		free(threadBestGrid[i]);
 	}
 	return bestGrid;

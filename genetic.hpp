@@ -3,17 +3,25 @@
 #include <algorithm>
 #include <numeric>
 #include "genetic_types.hpp"
+#include "simTiming.hpp"
 
+void printResultsToFile(int topa, int topb, int topc, char* filename) {
+	auto file = fopen(filename, "ab");
+	//format: top 3 scores, popsize, generations, mutation chance, top parent reserved slots
+	fprintf(file, "%d,%d,%d,%d,%d,%f,%d\n", topa, topb, topc, genetic::POP_SIZE, genetic::NUM_GENERATIONS, genetic::MUTATION_CHANCE * 100, genetic::TOP_PARENTS_RESERVED_SLOTS);
+	fclose(file);
+}
 
 
 /*
 algorithm:
 seed:
 	generate POP_SIZE arrangements
-evaluate():
-	run each arrangement, record results.
-reproduce():
-	create next generation from top arrangements. 
+loop:
+	evaluate():
+		run each arrangement, record results.
+	reproduce():
+		create next generation from top arrangements. 
 */
 
 
@@ -22,6 +30,8 @@ reproduce():
 cell* candidates;
 cell* newCandidates;
 
+std::array<Ranking, genetic::POP_SIZE> popRankings;
+
 static inline cell* candidateIx(int index){
 	return candidates+(index*GRID_SIZE);
 }
@@ -29,15 +39,16 @@ static inline cell* newCandidateIx(int index){
 	return newCandidates+(index*GRID_SIZE);
 }
 
+//allocates memory, initializes rng(), and (randomly) seeds the initial generation.
 void seed(){
     rng.seed(std::random_device()());
-    candidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*POP_SIZE));
-    newCandidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*POP_SIZE));
+    candidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*genetic::POP_SIZE));
+    newCandidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*genetic::POP_SIZE));
 	if (!candidates || !newCandidates) {
 		printf("Out of memory. Terminating.\n");
 		exit(ENOMEM);
 	}
-    for(unsigned int i = 0; i < POP_SIZE; i++){
+    for(unsigned int i = 0; i < genetic::POP_SIZE; i++){
     	cell* curCandidate = candidates+(i*GRID_SIZE);
     	for(gsize_t c = 0; c < GRID_SIZE; c++){
     		curCandidate[c] = randComponent(rng);
@@ -45,22 +56,29 @@ void seed(){
     }
 }
 
-
+//evaluate every candidate in a generation.
 void evaluate(){
-	for(unsigned int i = 0; i < POP_SIZE; i++){
-		cell* curCandidate = candidates+(i*GRID_SIZE);
-		
-		function_args locals_test;
-//		locals_test.thisCell = 0;
-//		locals_test.typegrid = curCandidate;
-//		locals_test.adjacency_sg = ;
-//		locals_test.energy_g = energy1_g;
-//		locals_test.heat_g = heat1_g;
-//		locals_test.properties_g = properties1_g;
-		
-		sim(locals_test);
+	cell type_g[GRID_SIZE];
+	adjacency_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+	res_cell energy_g[GRID_SIZE];
+	res_cell heat_g[GRID_SIZE];
+	LocalVars locals_g[GRID_SIZE];
+	ResourceNetworkManager<res_cell> resNet;
+
+	function_args threadlocals;
+	threadlocals.thisCell = 0;
+	threadlocals.typegrid = type_g;
+	threadlocals.adjacency_sg = adjacency_sg;
+	threadlocals.energy_g = energy_g;
+	threadlocals.heat_g = heat_g;
+	threadlocals.locals_g = locals_g;
+	threadlocals.resNet = resNet;
+
+	for(unsigned int i = 0; i < genetic::POP_SIZE; i++){
+		threadlocals.typegrid = candidates+(i*GRID_SIZE);
+		sim(threadlocals);
 		popRankings[i].index = i;
-		popRankings[i].result = scoreCurrentGrid(locals_test);
+		popRankings[i].result = scoreCurrentGrid(threadlocals);
 	}
 	std::sort(popRankings.begin(),popRankings.end(),rankingSort);
 }
@@ -83,7 +101,7 @@ int get_parent(int totalWeight){
 		i++;
 		curWeight = popRankings[i].result/static_cast<float>(totalWeight);
 	}
-	if(i>=POP_SIZE){
+	if(i>= genetic::POP_SIZE){
 		return 0;
 	}
 	return i;
@@ -99,7 +117,7 @@ void mate(cell* parentA, cell* parentB, cell* child){
 
 //every reproduction has a chance of a mutation
 void mutate(int child){
-	if(randFloat(rng) > MUTATION_CHANCE){
+	if(randFloat(rng) > genetic::MUTATION_CHANCE){
 		int thiscell = randCellIndex(rng);
 		cell component = static_cast<cell>(randComponent(rng));
 		//printf("%d,%d\n",thiscell,component);
@@ -115,7 +133,7 @@ void mutate(int child){
 //run the sim immediately, if the child is not viable (v < 0), try a new child.
 void reproduce(){
 	int totalWeight = std::accumulate(popRankings.begin(),popRankings.end(),0,rankingAdd);
-	for(unsigned int i = 0; i < POP_SIZE-TOP_PARENTS_RESERVED_SLOTS; i++){
+	for(unsigned int i = 0; i < genetic::POP_SIZE- genetic::TOP_PARENTS_RESERVED_SLOTS; i++){
 		int parent1 = get_parent(totalWeight);
 		int parent2 = get_parent(totalWeight);
 		mate(candidateIx(parent1),candidateIx(parent2),newCandidateIx(i));
@@ -127,14 +145,66 @@ void reproduce(){
 //			i--;
 //		}	
 	}
-	int parentOffset = POP_SIZE-TOP_PARENTS_RESERVED_SLOTS;
-	for(unsigned int i = parentOffset; i < POP_SIZE; i++){
+	int parentOffset = genetic::POP_SIZE-genetic::TOP_PARENTS_RESERVED_SLOTS;
+	for(unsigned int i = parentOffset; i < genetic::POP_SIZE; i++){
 		memcpy(newCandidateIx(i),candidateIx(popRankings[i-parentOffset].index),sizeof(cell)*GRID_SIZE);
 	}
 	std::swap(candidates,newCandidates);
 }
 
+/*
+multithreading strategy:
+divide up evaluate() into multiple threads?
 
-	
+*/
+
+//called by main().
+std::unique_ptr<cell[]> geneticSolve() {
+	//look up pruning genetic algorithm - heuristic
+	std::unique_ptr<cell[]> bestGrid = std::make_unique<cell[]>(GRID_SIZE);
+
+	double timePerSim = getTimingInfo();
+	double numSims = genetic::POP_SIZE*genetic::NUM_GENERATIONS;
+	double simSeconds = timePerSim*numSims / 1000;
+	printf("genetic simulation expected to take %2.2f seconds", simSeconds);
+	if (simSeconds > 300) {
+		printf(" (%2.0 minutes)", simSeconds / 60);
+	}
+
+
+	seed();
+
+	for (int i = 0; i < genetic::NUM_GENERATIONS; i++) {
+		evaluate();
+		reproduce();
+		//count simulations
+		if (count_sims_low > ONE_BILLION) {
+			count_sims_low -= ONE_BILLION;
+			count_sims_high++;
+		}
+	}
+	printf("total sims: %d,%03d,%03d,%03d\n",
+		count_sims_high,
+		(count_sims_low / 1000000) % 1000,
+		(count_sims_low / 1000) % 1000,
+		count_sims_low % 1000);
+
+
+	cell tempGrid[GRID_SIZE];
+	int bestSoFar;
+	printf("top 3 are\n");
+	for (int i = 0; i < 3; i++) {
+		bestSoFar = popRankings[i].result;
+		memcpy(tempGrid, candidates + (popRankings[i].index*GRID_SIZE), GRID_SIZE * sizeof(cell));
+		if (i == 0) {
+			std::copy(std::begin(tempGrid), std::end(tempGrid), bestGrid.get());
+		}
+		printf("\nbest value is %d\n", bestSoFar);
+		//printf("with heat value %d\n",bestHeat);
+		printMatrix(tempGrid);
+	}
+	//	printResultsToFile(popRankings[0].result,popRankings[1].result,popRankings[2].result,"geneticResults.csv");
+	return bestGrid;
+}
 
 

@@ -1,0 +1,12 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+/Debug
+/Release
+/analysis.txt
+/benchmarks.ods
+/components.o
+/experiment.exe
+/experiment.exe2
+/experiment.exe1.asm

@@ -19,13 +19,6 @@ types.hpp->components.hpp->doForTypes.hpp->gridManip.hpp->printMatrix.hpp->compo
 #include "types.hpp"
 #include "genetic.hpp"
 #include "bruteforce.hpp"
-
-void printResultsToFile(int topa,int topb,int topc,char* filename){
-	auto file = fopen(filename,"ab");
-	//format: top 3 scores, popsize, generations, mutation chance, top parent reserved slots
-	fprintf(file, "%d,%d,%d,%d,%d,%f,%d\n",topa,topb,topc,POP_SIZE,NUM_GENERATIONS,MUTATION_CHANCE*100,TOP_PARENTS_RESERVED_SLOTS);
-	fclose(file);
-}
 	
 //we only save the optimal result positions, so we need to regenerate all other information for the optimal result
 void displayOptimalResult(cell* bestGrid){
@@ -62,52 +55,11 @@ void displayOptimalResult(cell* bestGrid){
 
 int main(int argc, char** argv)
 {
-	std::unique_ptr<cell[]> bestGrid = bruteForce();
+	std::unique_ptr<cell[]> bestGrid = geneticSolve();
+	//std::unique_ptr<cell[]> bestGrid = bruteForce();
 	
-
 	displayOptimalResult(bestGrid.get());
 	return 0;
-//-----genetic algorithm-----
-//look up pruning genetic algorithm - heuristic
-//	//printf("doing %u generations of %u size for a total of AT LEAST %u iterations, expecting to take over %2f seconds\n",NUM_GENERATIONS,POP_SIZE,POP_SIZE*NUM_GENERATIONS,POP_SIZE*NUM_GENERATIONS/4000000.0f);
-	
-//int bestSoFar;
-//	seed();
-//	for(int i = 0; i < NUM_GENERATIONS; i++){
-//		evaluate();
-//		reproduce();
-//		//count simulations
-//		if(count_sims_low > ONE_BILLION){
-//			count_sims_low-=ONE_BILLION;
-//			count_sims_high++;
-//		}
-//	}
-//	printf("total sims: %d,%03d,%03d,%03d\n",
-//	count_sims_high,
-//	(count_sims_low/1000000)%1000,
-//	(count_sims_low/1000)%1000,
-//	count_sims_low%1000);
-//	
-//	printf("top 3 are\n");
-//	for(int i = 0; i < 3; i++){
-//		bestSoFar = popRankings[i].result;
-//		memcpy(bestGrid,candidates+(popRankings[i].index*GRID_SIZE),GRID_SIZE*sizeof(cell));
-//		printf("\nbest value is %d\n",bestSoFar);
-//		//printf("with heat value %d\n",bestHeat);
-//		printMatrix(bestGrid);
-//	}
-//	printResultsToFile(popRankings[0].result,popRankings[1].result,popRankings[2].result,"geneticResults.csv");
-//	
-////	cell tmp_arr[] = {REACTOR_ID,REACTOR_ID,REACTOR_ID,
-////					REACTOR_ID,REACTOR_ID,REACTOR_ID,
-////					NONE_ID,NONE_ID,NONE_ID};
-////	memset(resource_grid, 0, 9);
-////	setup_grid(tmp_arr, 9);
-////	printMatrix(tmp_arr);
-////	printMatrix(resource_grid);
-////	int tmpSum = sum_grid(resource_grid, GRID_SIZE, 0);
-////	printf("tmpSum is %d for size %d\n",tmpSum,GRID_SIZE);
-//	return 0;
 }
 
 //void applyEffect(Effect& eff, Map& matrix, int curX, int curY){

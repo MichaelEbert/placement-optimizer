@@ -6,7 +6,7 @@ Ver=2
 ObjFiles=
 Includes=
 Libs=
-PrivateResource=
+PrivateResource=PlacementOptimizer_private.rc
 ResourceIncludes=
 MakeIncludes=
 Compiler=
@@ -25,29 +25,29 @@ UseCustomMakefile=0
 CustomMakefile=
 CommandLine=islandlayout.txt
 Folders=
-IncludeVersionInfo=0
+IncludeVersionInfo=1
 SupportXPThemes=0
 CompilerSet=0
-CompilerSettings=00001fc000000000100000000
+CompilerSettings=00000fc000000000000000000
 UnitCount=16
 
 [VersionInfo]
-Major=1
-Minor=0
+Major=0
+Minor=4
 Release=0
-Build=0
+Build=77
 LanguageID=1033
 CharsetID=1252
 CompanyName=
-FileVersion=1.0.0.0
-FileDescription=Developed using the Dev-C++ IDE
+FileVersion=0.4.0.77
+FileDescription=Grid Placement Optimizer
 InternalName=
 LegalCopyright=
 LegalTrademarks=
 OriginalFilename=
-ProductName=
-ProductVersion=1.0.0.0
-AutoIncBuildNr=0
+ProductName=Placement Optimizer
+ProductVersion=0.4.0.77
+AutoIncBuildNr=1
 SyncProduct=1
 
 [Unit1]
@@ -200,7 +200,7 @@ OverrideBuildCmd=0
 BuildCmd=
 
 [Unit16]
-FileName=fastvector.hpp
+FileName=fastlist.hpp
 CompileCpp=1
 Folder=
 Compile=1

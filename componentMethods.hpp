@@ -54,6 +54,34 @@ const void None::component_setup(function_args& tlocals) noexcept{
 	return;
 }
 
+//-----Reactor methods-----
+const void Reactor::component_setup(function_args& tlocals) noexcept {
+	struct setAdjHeatAcceptors {
+		static void func(function_args& tlocals, gsize_t adjAddress) {
+			//if accepts heat, add 1
+			if (static_properties[tlocals.typegrid[adjAddress]].acceptsHeat) {
+				tlocals.locals_g[tlocals.thisCell].localA++;
+			}
+			return;
+		}
+	};
+
+	//Component::component_setup(tlocals);
+	doForAdjacents<setAdjHeatAcceptors>(tlocals);
+
+	auto numAdjHeatAcceptors = tlocals.locals_g[tlocals.thisCell].localA;
+
+	tlocals.energy_g[tlocals.thisCell] = Reactor::heatProduced;
+	//heat will be dispersed to adjacent components, so we store it in localB
+	tlocals.locals_g[tlocals.thisCell].localB = Reactor::heatProduced;
+	//unless numAdjHeatAcceptors == 0, in which case we(attempt to) disqualify this design
+	tlocals.heat_g[tlocals.thisCell] = (!numAdjHeatAcceptors)*Reactor::heatProduced;
+	return;
+}
+const void Reactor::component_action(function_args& tlocals) noexcept {
+	return;
+}
+
 //-----Spreader methods-----
 const void Spreader::component_setup(function_args& tlocals) noexcept{
 	//if adjacent component ACCEPTS heat and is part of a network, set this to be part of the same network.
@@ -146,38 +174,6 @@ const void HeatSink::component_action(function_args& tlocals) noexcept{
 	return;
 }
 
-//-----Reactor methods-----
-const void Reactor::component_setup(function_args& tlocals) noexcept{
-	struct setAdjHeatAcceptors{
-		static void func(function_args& tlocals, gsize_t adjAddress){
-			//if accepts heat, add 1
-			if(static_properties[tlocals.typegrid[adjAddress]].acceptsHeat){
-				tlocals.locals_g[tlocals.thisCell].localA++;
-			}
-			return;
-		}
-	};
-	
-	Component::component_setup(tlocals);
-	//sumAdjacentComponents(tlocals);
-	doForAdjacents<setAdjHeatAcceptors>(tlocals);
-	//auto numAdjHeatAcceptors = DoForAllTypes<int,AdjacentAcceptHeat,function_args&,FoldAdd>(tlocals);
-	//tlocals.locals_g[tlocals.thisCell].localA = numAdjHeatAcceptors;
-	
-	auto numAdjHeatAcceptors = tlocals.locals_g[tlocals.thisCell].localA;
-	
-//		adjacency_t* this_adjacency = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
-//		auto numReactors = this_adjacency[REACTOR_ID]+1;
-	tlocals.energy_g[tlocals.thisCell] = Reactor::heatProduced;
-	//heat will be dispersed to adjacent components, so we store it in localB
-	tlocals.locals_g[tlocals.thisCell].localB = Reactor::heatProduced;//numReactors*numReactors;
-	//unless numAdjHeatAcceptors == 0, in which case we(attempt to) disqualify this design
-	tlocals.heat_g[tlocals.thisCell] = (!numAdjHeatAcceptors)*Reactor::heatProduced;
-	return;
-}
-const void Reactor::component_action(function_args& tlocals) noexcept{
-	return;
-}
 
 //fuck shit this is creating a systems of equations.
 //-----boiler methods-----

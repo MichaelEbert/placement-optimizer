@@ -45,7 +45,7 @@ class ResourceNetworkManager{
 			return **a;
 		}
 		int numActualNets = 0;
-		std::vector<Network<T> > getValidNetworks();
+		FastList<Network<T> > getValidNetworks();
 		NetworkBitfield networkToBitfield(Network<T> a){
 			return 1<<(*a-values);
 		}
@@ -117,12 +117,12 @@ void ResourceNetworkManager<T>::reset(){
 
 //need to get list of all valid networks.
 template<typename T>
-std::vector<Network<T> > ResourceNetworkManager<T>::getValidNetworks(){
-	std::vector<Network<T> > temp;
-	temp.reserve(numActualNets);
+FastList<Network<T> > ResourceNetworkManager<T>::getValidNetworks(){
+	FastList<Network<T> > temp(numActualNets);
+	//temp.reserve(numActualNets);
 	for(int i = 0; i < nextNet; i++){
 		if(networks[i] == &values[i]){
-			temp.emplace_back(&(networks[i]));
+			temp.emplace(&(networks[i]));
 		}
 	}
 	return temp;

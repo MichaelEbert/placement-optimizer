@@ -128,6 +128,10 @@ public:
 	unsigned short curEntries;
 	FastList();
 	FastList(int const numStartingEntries);
+	FastList(FastList<T>&& other);
+	FastList(FastList<T> const& other) = delete;
+	FastList& operator= (FastList<T>&& other);
+	FastList& operator= (FastList<T> const& other) = delete;
 	T const& operator[](unsigned short const i){
 		return entryArray[i];
 	}
@@ -164,6 +168,23 @@ FastList<T>::FastList(int const numStartingEntries) {
 	maxEntries = numStartingEntries;
 	entryArray = static_cast<T*>(malloc(sizeof(T)*numStartingEntries));
 	return;
+}
+
+template<typename T>
+FastList<T>::FastList(FastList<T>&& other) {
+	curEntries = other.curEntries;
+	maxEntries = other.maxEntries;
+	entryArray = other.entryArray;
+	other.entryArray = nullptr;
+	return;
+}
+template<typename T>
+FastList<T>& FastList<T>::operator= (FastList<T>&& other) {
+	curEntries = other.curEntries;
+	maxEntries = other.maxEntries;
+	entryArray = other.entryArray;
+	other.entryArray = nullptr;
+	return *this;
 }
 
 template<typename T>
