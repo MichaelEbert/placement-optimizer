@@ -1,6 +1,8 @@
 #pragma once
 //contains component implementations
 #include "gridManip.hpp"
+#include "doForTypes.hpp"
+#include "printMatrix.hpp"
 
 
 //counts the number of adjacent components that can accept heat
@@ -82,16 +84,16 @@ const void Spreader::component_action(function_args& tlocals) noexcept{
 			auto thisNet = tlocals.locals_g[tlocals.thisCell].netPtr;
 			auto otherNet = tlocals.locals_g[adjAddress].netPtr;
 			
-			if(providesHeat && (thisNet != otherNet)){
+			if(providesHeat && (!tlocals.resNet.areSameNetwork(thisNet,otherNet))){
 				//add heat to this network
 				auto heatToAdd = static_cast<res_cell>(tlocals.locals_g[adjAddress].localB)/static_cast<res_cell>(tlocals.locals_g[adjAddress].localA);
-				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
+				**(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
 			}
-			else if(acceptsHeat && (thisNet != otherNet)){
-				//erk. need to fix somehow.
-				auto heatToAdd = static_cast<res_cell>(tlocals.heat_g[adjAddress]);
-				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
-				tlocals.heat_g[adjAddress] = 0;
+			else if(acceptsHeat && !tlocals.resNet.areSameNetwork(thisNet,otherNet)){
+				//is this even possible?? TODO fix
+//				auto heatToAdd = static_cast<res_cell>(tlocals.heat_g[adjAddress]);
+//				**(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
+//				tlocals.heat_g[adjAddress] = 0;
 			}
 		}
 	};
@@ -132,15 +134,15 @@ const void HeatSink::component_action(function_args& tlocals) noexcept{
 			auto thisnetPtr = tlocals.locals_g[tlocals.thisCell].netPtr;
 			auto othernetPtr = tlocals.locals_g[adjAddress].netPtr;
 			
-			if(providesHeat && (thisnetPtr != othernetPtr)){
+			if(providesHeat && (!tlocals.resNet.areSameNetwork(thisnetPtr,othernetPtr))){
 				//add heat to this network
 				auto heatToAdd = static_cast<res_cell>(tlocals.locals_g[adjAddress].localB)/static_cast<res_cell>(tlocals.locals_g[adjAddress].localA);
-				**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
+				**(tlocals.locals_g[tlocals.thisCell].netPtr)+=heatToAdd;
 			}
 		}
 	};
 	doForAdjacents<sinkAdjacentAction>(tlocals);
-	**static_cast<res_cell**>(tlocals.locals_g[tlocals.thisCell].netPtr)+=HeatSink::heatProduced;
+	**(tlocals.locals_g[tlocals.thisCell].netPtr)+=HeatSink::heatProduced;
 	return;
 }
 

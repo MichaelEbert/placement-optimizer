@@ -11,14 +11,13 @@
 
 /*
 include order:
-types.hpp->components.hpp->doForTypes.hpp->gridManip.hpp->componentMethods.hpp->gridManip_after.hpp->(genetic_types.hpp->genetic.hpp)OR(bruteforce.hpp)->main.cpp
+types.hpp->components.hpp->doForTypes.hpp->gridManip.hpp->printMatrix.hpp->componentMethods.hpp->gridManip_after.hpp->(genetic_types.hpp->genetic.hpp)OR(bruteforce.hpp)->main.cpp
 
 */
 
 //#include "gridManip_after.hpp"
 #include "types.hpp"
 #include "genetic.hpp"
-#include "printMatrix.hpp"
 #include "bruteforce.hpp"
 
 void printResultsToFile(int topa,int topb,int topc,char* filename){

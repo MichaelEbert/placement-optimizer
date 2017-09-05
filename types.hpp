@@ -2,8 +2,8 @@
 #include "resourceNetwork.hpp"
 const short NUM_COMPONENT_TYPES = 5;
 const short NUM_RESOURCE_TYPES = 2;
-const short GRID_X_SIZE = 4;
-const short GRID_Y_SIZE = 3;
+const short GRID_X_SIZE = 3;
+const short GRID_Y_SIZE = 4;
 
 const int GRID_SIZE = GRID_X_SIZE*GRID_Y_SIZE;
 typedef unsigned char cell;
@@ -37,7 +37,7 @@ typedef struct {
 		};
 		void* ptrB;
 	};
-	void* netPtr;
+	Network<res_cell> netPtr;
 } LocalVars;
 
 

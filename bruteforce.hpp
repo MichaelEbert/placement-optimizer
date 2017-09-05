@@ -21,6 +21,7 @@ namespace threads{
 	
 	static_assert(work_units_per_thread>4,"Highly variable work per thread. Recommend increasing NUM_STATIC_SLOTS.");
 	
+	
 	//thread index to which wu to start at
 	int index_to_starting_wu(int index){
 		return static_cast<int>(work_units_per_thread * index);
@@ -123,24 +124,41 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 	memset(type_g, 0, GRID_SIZE);
 	//initialize thread stuff
 	printf("thread %d has %u wu.\n",threadnum,threads::wu_to_do(threadnum));
-	unsigned long num_iterations = threads::wu_to_do(threadnum)*threads::iterations_per_wu;
 	for(int i = threads::num_static_slots; i >0; i--){
 		type_g[GRID_SIZE-i] = threads::index_to_wu_value(threadnum,i-1);
 	}
-	for(unsigned long i = 0; i < num_iterations; i++){
-		increment_grid(locals_test);
-		sim(locals_test);
-		int thisSum = scoreCurrentGrid(locals_test);
-//		printMatrix(type_g);
-//		printf("result is %d\n",thisSum);
-		if(thisSum > bestSoFar){
-			bestSoFar = thisSum;
-			//bestHeat = heatSum;
-			memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
+	
+	unsigned long num_iterations = threads::wu_to_do(threadnum)*threads::iterations_per_wu;
+	for(unsigned int wu = 0; wu < threads::wu_to_do(threadnum);wu++){
+		for(unsigned long i = 0; i < threads::iterations_per_wu; i++){
+			increment_grid(locals_test);
+			sim(locals_test);
+			int thisSum = scoreCurrentGrid(locals_test);
+			if(thisSum > bestSoFar){
+				bestSoFar = thisSum;
+				//bestHeat = heatSum;
+				memcpy(bestGrid,type_g,GRID_SIZE*sizeof(cell));
+			}
+	//		if(i %10000 == 0){
+	//			printf("thread %d, bestresult %d.\n",threadnum,bestSoFar);
+	//		}
+	//		if(thisSum == 940){
+	//			printf("i is %d\n",i);
+	//				printf("optimal result:\n");
+	//				printMatrix(bestGrid);
+	//				printf("score: %d\n",thisSum);
+	//				printf("energy grid:\n");
+	//				printMatrix(energy_g);
+	//				printf("heat grid:\n");
+	//				printMatrix(heat_g);
+	//				printf("locals grid:\n");
+	//				printMatrix(locals_g);
+	//				printf("network info:\n");
+	//				locals_test.resNet.printDebugInfo();
+	//			break;
+	//		}
 		}
-		if(i%threads::iterations_per_wu == 0){
-			printf("wu completed on thread %d.\n",threadnum);
-		}
+		printf("thread %d completed work unit %d; best result %d.\n",threadnum,wu,bestSoFar);
 	}
 	std::copy(std::begin(bestGrid),std::end(bestGrid),threadBestGrid);
 	*threadBestScore = bestSoFar;
@@ -152,15 +170,15 @@ std::unique_ptr<cell[]> bruteForce(){
 	std::unique_ptr<cell[]> bestGrid = std::make_unique<cell[]>(GRID_SIZE);
 	
 //	{//user-defined grid instead of brute forcing this
-////		cell testGrid[GRID_SIZE] = {
-////					REACTOR_ID,HEATSINK_ID,BOILER_ID,
-////					HEATSINK_ID,BOILER_ID,NONE_ID,
-////					BOILER_ID,NONE_ID,NONE_ID,
-////					0,0,0};
 //		cell testGrid[GRID_SIZE] = {
-//					REACTOR_ID,HEATSINK_ID,REACTOR_ID,
-//					SPREADER_ID,SPREADER_ID,REACTOR_ID,
-//					REACTOR_ID,REACTOR_ID,NONE_ID};
+//					REACTOR_ID,HEATSINK_ID,BOILER_ID,
+//					HEATSINK_ID,BOILER_ID,NONE_ID,
+//					BOILER_ID,NONE_ID,NONE_ID,
+//					0,0,0};
+////		cell testGrid[GRID_SIZE] = {
+////					REACTOR_ID,SPREADER_ID,REACTOR_ID,
+////					SPREADER_ID,HEATSINK_ID,REACTOR_ID,
+////					REACTOR_ID,REACTOR_ID,NONE_ID};
 //		std::copy(std::begin(testGrid),std::end(testGrid),bestGrid.get());
 //	}
 //	return bestGrid;
@@ -201,6 +219,8 @@ std::unique_ptr<cell[]> bruteForce(){
 	auto maxElementIt = std::max_element(std::begin(threadBestScore),std::end(threadBestScore));
 	auto maxElementIndex = std::distance(std::begin(threadBestScore),maxElementIt);
 	std::copy(threadBestGrid[maxElementIndex],threadBestGrid[maxElementIndex]+(sizeof(cell)*GRID_SIZE),bestGrid.get());
+	
+	printf("best score: %d\n",*maxElementIt);
 	
 	for(int i = 0; i < threads::num_threads; i++){
 		free(threadBestGrid[i]);

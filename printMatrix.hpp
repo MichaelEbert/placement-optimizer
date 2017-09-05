@@ -1,5 +1,6 @@
 #pragma once
-#include "types.hpp"
+#include "gridManip.hpp"
+
 template<typename T>
 int printMatrix(T* matrix) noexcept
 {
@@ -61,7 +62,6 @@ int printMatrix(cell* matrix) noexcept
 template<>
 int printMatrix(LocalVars* matrix) noexcept
 {
-	printf("%d",sizeof(void*));
 	printf("netPtr:\n");
 	for(int i = 0; i < GRID_Y_SIZE; i++){
 		for(int j = 0; j < GRID_X_SIZE; j++){

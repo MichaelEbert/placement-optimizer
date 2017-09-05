@@ -34,6 +34,10 @@ using Network = T**;
 template<typename T>
 class ResourceNetworkManager{
 	public:
+		static bool areSameNetwork(Network<T> a, Network<T> b){
+			return (a != nullptr) && (b != nullptr) && *a == *b;
+		}
+		
 		Network<T> newNetwork();
 		void joinNetworks(Network<T> a,Network<T> b);
 		void reset();
@@ -45,16 +49,14 @@ class ResourceNetworkManager{
 		NetworkBitfield networkToBitfield(Network<T> a){
 			return 1<<(*a-values);
 		}
+		
 		T sumNetworkBitfield(NetworkBitfield networks) const;
-		void printDebugInfo();
-		ResourceNetworkManager(){
-			return;
-		}
-		~ResourceNetworkManager(){
-			return;
-		}
+		void printDebugInfo() const;
+		void setDebug(){rnDebug = true;}
+		void clearDebug(){rnDebug = false;}
 	private:
-		int curMaxNet = 0;
+		bool rnDebug = false;
+		int nextNet = 0;
 		T* networks[MAX_NETWORKS];
 		std::vector<Network<T> > valueNetworkLists[MAX_NETWORKS];
 		T values[MAX_NETWORKS];
@@ -62,14 +64,20 @@ class ResourceNetworkManager{
 
 template<typename T>
 Network<T> ResourceNetworkManager<T>::newNetwork(){
-	if(curMaxNet>= MAX_NETWORKS){
+	if(nextNet>= MAX_NETWORKS){
 		printf("error max networks reached\n");
 		return nullptr;
 	}
-	networks[curMaxNet] = &values[curMaxNet];
-	valueNetworkLists[curMaxNet].emplace_back(&networks[curMaxNet]);
+	networks[nextNet] = &values[nextNet];
+	if(rnDebug){
+		printf("nextNet is %d\n",nextNet);
+		printf("assigning to %p value: %p\n",&networks[nextNet],&values[nextNet]);
+		printf("valNetList has %d elements\n",valueNetworkLists[nextNet].size());
+	}
+	valueNetworkLists[nextNet].emplace_back(&networks[nextNet]);
 	numActualNets++;
-	return &networks[curMaxNet++];
+
+	return &networks[nextNet++];
 }
 
 //join network B to network A. b or a can be null (is better to check for null here or before call?)
@@ -77,6 +85,9 @@ template<typename T>
 void ResourceNetworkManager<T>::joinNetworks(Network<T> a,Network<T> b){
 	if(a == nullptr || b == nullptr || *b==*a){
 		return;
+	}
+	if(rnDebug){
+		printf("joining %p and %p\n",a,b);
 	}
 	
 	auto bValueIndex = (*b)-values;
@@ -93,13 +104,13 @@ void ResourceNetworkManager<T>::joinNetworks(Network<T> a,Network<T> b){
 //reinitialize for new map
 template<typename T>
 void ResourceNetworkManager<T>::reset(){
-	for(int i = 0; i < curMaxNet-1;i++){
+	for(int i = 0; i < nextNet;i++){
 		valueNetworkLists[i].clear();
 	}
 	for(int i = 0; i < MAX_NETWORKS; i++){
 		values[i] = 0;
 	}
-	curMaxNet=0;
+	nextNet=0;
 	numActualNets=0;
 	return;
 }
@@ -109,7 +120,7 @@ template<typename T>
 std::vector<Network<T> > ResourceNetworkManager<T>::getValidNetworks(){
 	std::vector<Network<T> > temp;
 	temp.reserve(numActualNets);
-	for(int i = 0; i < curMaxNet; i++){
+	for(int i = 0; i < nextNet; i++){
 		if(networks[i] == &values[i]){
 			temp.emplace_back(&(networks[i]));
 		}
@@ -121,7 +132,7 @@ std::vector<Network<T> > ResourceNetworkManager<T>::getValidNetworks(){
 template<typename T>
 T ResourceNetworkManager<T>::sumNetworkBitfield(NetworkBitfield networks) const{
 	T sum = 0;
-	for(int i = 0; i < curMaxNet; i++){
+	for(int i = 0; i < nextNet; i++){
 		if(networks & 1<<i){
 			sum += values[i];
 		}
@@ -130,19 +141,19 @@ T ResourceNetworkManager<T>::sumNetworkBitfield(NetworkBitfield networks) const{
 }
 
 template<typename T>
-void ResourceNetworkManager<T>::printDebugInfo(){
-	printf("MaxNetsUsed: %d\nValsUsed: %d\n",curMaxNet,numActualNets);
-	printf("#:Netwk\t\tPtsTo\t\tvalAdr\tvalue\n");
-	for(int i = 0;  i < curMaxNet; i++){
+void ResourceNetworkManager<T>::printDebugInfo() const{
+	printf("MaxNetsUsed: %d\nValsUsed: %d\n",nextNet,numActualNets);
+	printf("#:Netwk                 PtsTo                        valAdr                value\n");
+	for(int i = 0;  i < nextNet; i++){
 		printf("%d:%p\t%p\t\t%p\t%d\n",i,&networks[i], networks[i], &values[i], values[i]);
 	}
 }
 
 template<>
-void ResourceNetworkManager<float>::printDebugInfo(){
-	printf("MaxNetsUsed: %d\nValsUsed: %d\n",curMaxNet,numActualNets);
-	printf("#:Netwk\t\tPtsTo\t\tvalAdr\tvalue\n");
-	for(int i = 0;  i < curMaxNet; i++){
+void ResourceNetworkManager<float>::printDebugInfo() const{
+	printf("MaxNetsUsed: %d\nValsUsed: %d\n",nextNet,numActualNets);
+	printf("#:Netwk                 PtsTo                        valAdr                value\n");
+	for(int i = 0;  i < nextNet; i++){
 		printf("%d:%p\t%p\t\t%p\t%f\n",i,&networks[i], networks[i], &values[i], values[i]);
 	}
 }

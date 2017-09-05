@@ -1,6 +1,7 @@
 #pragma once
 #include <type_traits>
 #include <cstring>
+#include <cstdlib>
 //vector<> code takes an absurd amount of time to run, so I get to roll my own.
 
 
@@ -120,15 +121,18 @@ so this uses more operations (possibly adding N to all ptrs) -- use if need less
 //like vector, but a skeletal subset of functionality and only for trivial types. no deletion for one.
 template<typename T>
 class FastList{
-static_assert(std::is_trivial<T>::value,"fastlist is only fast for trivial types; it doesn't implement references and stuff for construction.");
+//static_assert(std::is_trivial<T>::value,"fastlist is only fast for trivial types; it doesn't implement references and stuff for construction.");
 public:
-	static const int numStartingEntries = 4;
+	static const int defaultStartingEntries = 4;
 	
 	unsigned short curEntries;
 	FastList();
-	T operator[](unsigned short const i){
+	FastList(int const numStartingEntries);
+	T const& operator[](unsigned short const i){
 		return entryArray[i];
 	}
+	template<typename... Arg>
+	void emplace(Arg&&... arg);
 	void add(T const element);
 	void addAll(FastList<T>& lst);
 	void clear();
@@ -149,8 +153,16 @@ private:
 template<typename T>
 FastList<T>::FastList(){
 	curEntries = 0;
-	maxEntries = FastList::numStartingEntries;
-	entryArray = static_cast<T*>(malloc(sizeof(T)*FastList::numStartingEntries));
+	maxEntries = FastList::defaultStartingEntries;
+	entryArray = static_cast<T*>(malloc(sizeof(T)*FastList::defaultStartingEntries));
+	return;
+}
+
+template<typename T>
+FastList<T>::FastList(int const numStartingEntries) {
+	curEntries = 0;
+	maxEntries = numStartingEntries;
+	entryArray = static_cast<T*>(malloc(sizeof(T)*numStartingEntries));
 	return;
 }
 
@@ -162,6 +174,7 @@ FastList<T>::~FastList(){
 
 template<typename T>
 void FastList<T>::add(T const element){
+	//printf("adding entry\n");
 	if(this->maxEntries == this->curEntries){
 		entryArray = static_cast<T*>(realloc(entryArray, 2*maxEntries));
 		this->maxEntries *= 2;
@@ -170,6 +183,20 @@ void FastList<T>::add(T const element){
 	this->curEntries++;
 	return;
 }
+
+template<typename T>template<typename... Arg>
+void FastList<T>::emplace(Arg&&... arg){
+	//printf("adding entry with forwarding\n");
+	if(this->maxEntries == this->curEntries){
+		entryArray = static_cast<T*>(realloc(entryArray, 2*maxEntries));
+		this->maxEntries *= 2;
+	}
+	T* thisEntry = entryArray+this->curEntries;
+	new(thisEntry) T(std::forward<Arg>(arg)...);
+	this->curEntries++;
+	return;
+}
+
 
 template<typename T>
 void FastList<T>::addAll(FastList<T>& lst){
@@ -189,7 +216,7 @@ void FastList<T>::addAll(FastList<T>& lst){
 	}
 	else{
 		for(int i = 0; i < lst.curEntries; i++){
-			entryArray[this->curEntries] = lst[i];
+			entryArray[this->curEntries] = std::move(lst[i]);
 			this->curEntries++;
 		}
 	}

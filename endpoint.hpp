@@ -1,6 +1,7 @@
 #pragma once
 #include <limits>
 #include <set>
+
 //endpoint stuff
 //heat flows from reactor->heat networks->endpoints.
 //how to tell if component is part of heat network or endpoint? 
@@ -124,7 +125,7 @@ bool heatWorks(std::vector<Endpoint>& endpoints, ResourceNetworkManager<res_cell
 	//1.total up each networks maximum heat
 	//2.total up each combination of networks maximum heat
 
-	std::vector<EndpointEquation<res_cell> > equations;
+	std::vector<EndpointEquation<res_cell> > equations;// (resNet.numActualNets + endpoints.size());
 	equations.reserve(resNet.numActualNets + endpoints.size());
 	auto actualNets = resNet.getValidNetworks();
 	for(auto& net: actualNets){

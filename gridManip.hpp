@@ -1,7 +1,7 @@
 //gridManip.h - contains grid manipulation methods
 #pragma once
 #include <cstring>
-#include "doForTypes.hpp"
+#include "types.hpp"
 //functions for detecting if the given index is on an edge of the grid.
 inline bool is_left_edge(gsize_t index) noexcept{
 	return (index%GRID_X_SIZE == 0);
