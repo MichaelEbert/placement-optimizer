@@ -54,7 +54,7 @@ void bruteForceWork(int threadnum, cell* threadBestGrid, int* threadBestScore){
 	
 	function_args locals_test;
 	locals_test.thisCell = 0;
-	locals_test.typegrid = type_g;
+	locals_test.type_g = type_g;
 	locals_test.adjacency_sg = adjacency_sg;
 	locals_test.energy_g = energy_g;
 	locals_test.heat_g = heat_g;

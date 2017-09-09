@@ -59,7 +59,7 @@ const void Reactor::component_setup(function_args& tlocals) noexcept {
 	struct setAdjHeatAcceptors {
 		static void func(function_args& tlocals, gsize_t adjAddress) {
 			//if accepts heat, add 1
-			if (static_properties[tlocals.typegrid[adjAddress]].acceptsHeat) {
+			if (static_properties[tlocals.type_g[adjAddress]].acceptsHeat) {
 				tlocals.locals_g[tlocals.thisCell].localA++;
 			}
 			return;
@@ -90,7 +90,7 @@ const void Spreader::component_setup(function_args& tlocals) noexcept{
 		static void func(function_args& tlocals, gsize_t adjAddress){
 			auto& thisLocals = tlocals.locals_g[tlocals.thisCell];
 			auto& thatLocals = tlocals.locals_g[adjAddress];
-			if(static_properties[tlocals.typegrid[adjAddress]].acceptsHeat && thatLocals.netPtr != nullptr){
+			if(static_properties[tlocals.type_g[adjAddress]].acceptsHeat && thatLocals.netPtr != nullptr){
 				//todo: check if doing this is faster than if(this)then{join(this,that)}else{this=that}
 				tlocals.resNet.joinNetworks(static_cast<float**>(thisLocals.netPtr),static_cast<float**>(thatLocals.netPtr));
 				thisLocals.netPtr = thatLocals.netPtr;
@@ -106,7 +106,7 @@ const void Spreader::component_setup(function_args& tlocals) noexcept{
 const void Spreader::component_action(function_args& tlocals) noexcept{
 	struct spreaderAdjacentAction{
 		static void func(function_args& tlocals, gsize_t adjAddress){
-			auto type = tlocals.typegrid[adjAddress];
+			auto type = tlocals.type_g[adjAddress];
 			auto providesHeat = static_properties[type].providesHeat;
 			auto acceptsHeat = static_properties[type].acceptsHeat;
 			auto thisNet = tlocals.locals_g[tlocals.thisCell].netPtr;
@@ -139,7 +139,7 @@ const void HeatSink::component_setup(function_args& tlocals) noexcept{
 			auto& thisLocals = tlocals.locals_g[tlocals.thisCell];
 			auto& thatLocals = tlocals.locals_g[adjAddress];
 			
-			if(static_properties[tlocals.typegrid[adjAddress]].providesHeat && thatLocals.netPtr != nullptr){
+			if(static_properties[tlocals.type_g[adjAddress]].providesHeat && thatLocals.netPtr != nullptr){
 				tlocals.resNet.joinNetworks(static_cast<float**>(thisLocals.netPtr),static_cast<float**>(thatLocals.netPtr));
 				thisLocals.netPtr = thatLocals.netPtr;
 			}
@@ -156,7 +156,7 @@ const void HeatSink::component_setup(function_args& tlocals) noexcept{
 const void HeatSink::component_action(function_args& tlocals) noexcept{
 	struct sinkAdjacentAction{
 		static void func(function_args& tlocals, gsize_t adjAddress){
-			auto type = tlocals.typegrid[adjAddress];
+			auto type = tlocals.type_g[adjAddress];
 			auto providesHeat = static_properties[type].providesHeat;
 			auto acceptsHeat = static_properties[type].acceptsHeat;
 			auto thisnetPtr = tlocals.locals_g[tlocals.thisCell].netPtr;
@@ -182,7 +182,7 @@ const void Boiler::component_setup(function_args& tlocals) noexcept{
 	//if boiler is next to a heat giver, thats bad.
 	struct getAdjHeatProducers{
 		static void func(function_args& tlocals, gsize_t adjAddress){
-			if(static_properties[tlocals.typegrid[adjAddress]].providesHeat){
+			if(static_properties[tlocals.type_g[adjAddress]].providesHeat){
 				tlocals.heat_g[tlocals.thisCell]+=Reactor::heatProduced;//hopefully negate this unit.
 			}
 		}
@@ -195,7 +195,7 @@ const void Boiler::component_action(function_args& tlocals) noexcept{
 	//fuck fix this later
 	struct getTwoPointerLocs{
 		static void func(function_args& tlocals, gsize_t adjAddress){
-			auto adjType = tlocals.typegrid[adjAddress];
+			auto adjType = tlocals.type_g[adjAddress];
 			if(static_properties[adjType].networkable){
 				auto& targetA = tlocals.locals_g[adjAddress].netPtr;
 				if(targetA != nullptr){

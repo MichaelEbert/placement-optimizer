@@ -11,7 +11,7 @@ std::exponential_distribution<float> randExpFloat(2);
 //use: randType(rng) to return a random component type.
 
 namespace genetic{
-	const unsigned int POP_SIZE = 500;//population size
+	const unsigned int POP_SIZE = 2000;//population size
 	const unsigned int NUM_GENERATIONS = 1000;//how many generations should we simulate 
 	const float MUTATION_CHANCE = 0.55f;
 	const int TOP_PARENTS_RESERVED_SLOTS = 20;//the top n parents will be copied into the next generation

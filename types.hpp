@@ -2,8 +2,8 @@
 #include "resourceNetwork.hpp"
 const short NUM_COMPONENT_TYPES = 5;
 const short NUM_RESOURCE_TYPES = 2;
-const short GRID_X_SIZE = 3;
-const short GRID_Y_SIZE = 4;
+const short GRID_X_SIZE = 4;
+const short GRID_Y_SIZE = 5;
 
 const int GRID_SIZE = GRID_X_SIZE*GRID_Y_SIZE;
 typedef unsigned char cell;
@@ -45,7 +45,7 @@ typedef struct {
 //this struct contains thread local vars
 typedef struct{
 	gsize_t thisCell;
-	cell* typegrid;
+	cell* type_g;
 	adjacency_t* adjacency_sg;
 	res_cell* energy_g;
 	res_cell* heat_g;

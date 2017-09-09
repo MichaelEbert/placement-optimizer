@@ -17,7 +17,7 @@ double getTimingInfo() {
 
 	function_args threadlocals;
 	threadlocals.thisCell = 0;
-	threadlocals.typegrid = type_g;
+	threadlocals.type_g = type_g;
 	threadlocals.adjacency_sg = adjacency_sg;
 	threadlocals.energy_g = energy_g;
 	threadlocals.heat_g = heat_g;

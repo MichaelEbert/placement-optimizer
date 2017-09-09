@@ -86,7 +86,7 @@ void doForAdjacents(function_args& tlocals){
 
 struct adjTypeSum{
 	void func(function_args& tlocals, gsize_t neighborIndex){
-		auto adjType = tlocals.typegrid[neighborIndex];
+		auto adjType = tlocals.type_g[neighborIndex];
 		auto adjComponents = tlocals.adjacency_sg+(tlocals.thisCell*NUM_COMPONENT_TYPES);
 		adjComponents[adjType]++;
 		return;
@@ -100,7 +100,7 @@ void sumAdjacentComponents(function_args& tlocals) noexcept
 {
 	auto thisCell = tlocals.thisCell;
 	auto adjComponents = tlocals.adjacency_sg+(thisCell*NUM_COMPONENT_TYPES);
-	auto tCell = tlocals.typegrid+thisCell;
+	auto tCell = tlocals.type_g+thisCell;
 	cell* adjCell;
 	for(int i = 0; i < 4; i++){
 		bool invalid = false;
@@ -160,12 +160,12 @@ void sim(function_args& tlocals) noexcept{
 
 //increment the grid by 1. used in brute force search.
 void increment_grid(function_args& tlocals) noexcept{
-	tlocals.typegrid[0]++;
+	tlocals.type_g[0]++;
 	//if grid[0] == NUM_COMPONENT_TYPES, carry
 	for(gsize_t i = 0; i < GRID_SIZE; i++){
-		if(tlocals.typegrid[i] == NUM_COMPONENT_TYPES){
-			tlocals.typegrid[i] = 0;
-			tlocals.typegrid[i+1]++;
+		if(tlocals.type_g[i] == NUM_COMPONENT_TYPES){
+			tlocals.type_g[i] = 0;
+			tlocals.type_g[i+1]++;
 		}
 		else{
 			return;

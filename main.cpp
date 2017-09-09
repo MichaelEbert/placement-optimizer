@@ -30,7 +30,7 @@ void displayOptimalResult(cell* bestGrid){
 	
 	function_args locals_test;
 	locals_test.thisCell = 0;
-	locals_test.typegrid = bestGrid;
+	locals_test.type_g = bestGrid;
 	locals_test.adjacency_sg = adjacency_sg;
 	locals_test.energy_g = energy_g;
 	locals_test.heat_g = heat_g;
@@ -59,6 +59,7 @@ int main(int argc, char** argv)
 	//std::unique_ptr<cell[]> bestGrid = bruteForce();
 	
 	displayOptimalResult(bestGrid.get());
+	system("pause");
 	return 0;
 }
 

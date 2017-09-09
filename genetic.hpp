@@ -40,7 +40,7 @@ static inline cell* newCandidateIx(int index){
 }
 
 //allocates memory, initializes rng(), and (randomly) seeds the initial generation.
-void seed(){
+void seed(function_args& tlocals){
     rng.seed(std::random_device()());
     candidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*genetic::POP_SIZE));
     newCandidates = static_cast<cell*>(malloc(sizeof(cell)*GRID_SIZE*genetic::POP_SIZE));
@@ -53,32 +53,21 @@ void seed(){
     	for(gsize_t c = 0; c < GRID_SIZE; c++){
     		curCandidate[c] = randComponent(rng);
     	}
+		tlocals.type_g = curCandidate;
+		sim(tlocals);
+		if (scoreCurrentGrid(tlocals) < 0) {
+			i--;
+		}
     }
 }
 
 //evaluate every candidate in a generation.
-void evaluate(){
-	cell type_g[GRID_SIZE];
-	adjacency_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
-	res_cell energy_g[GRID_SIZE];
-	res_cell heat_g[GRID_SIZE];
-	LocalVars locals_g[GRID_SIZE];
-	ResourceNetworkManager<res_cell> resNet;
-
-	function_args threadlocals;
-	threadlocals.thisCell = 0;
-	threadlocals.typegrid = type_g;
-	threadlocals.adjacency_sg = adjacency_sg;
-	threadlocals.energy_g = energy_g;
-	threadlocals.heat_g = heat_g;
-	threadlocals.locals_g = locals_g;
-	threadlocals.resNet = resNet;
-
+void evaluate(function_args& tlocals){
 	for(unsigned int i = 0; i < genetic::POP_SIZE; i++){
-		threadlocals.typegrid = candidates+(i*GRID_SIZE);
-		sim(threadlocals);
+		tlocals.type_g = candidates+(i*GRID_SIZE);
+		sim(tlocals);
 		popRankings[i].index = i;
-		popRankings[i].result = scoreCurrentGrid(threadlocals);
+		popRankings[i].result = scoreCurrentGrid(tlocals);
 	}
 	std::sort(popRankings.begin(),popRankings.end(),rankingSort);
 }
@@ -96,7 +85,7 @@ int get_parent(int totalWeight){
 	float curWeight = 0;
 	unsigned int i = 0;
 	curWeight = popRankings[i].result/static_cast<float>(totalWeight);
-	while(randomFloat >= curWeight){
+	while(randomFloat >= curWeight && randomFloat > (1/static_cast<float>(totalWeight))){
 		randomFloat -= curWeight;
 		i++;
 		curWeight = popRankings[i].result/static_cast<float>(totalWeight);
@@ -131,7 +120,7 @@ void mutate(int child){
 
 //create new generation from top arrangements
 //run the sim immediately, if the child is not viable (v < 0), try a new child.
-void reproduce(){
+void reproduce(function_args& tlocals){
 	int totalWeight = std::accumulate(popRankings.begin(),popRankings.end(),0,rankingAdd);
 	for(unsigned int i = 0; i < genetic::POP_SIZE- genetic::TOP_PARENTS_RESERVED_SLOTS; i++){
 		int parent1 = get_parent(totalWeight);
@@ -140,10 +129,11 @@ void reproduce(){
 		mutate(i);
 		
 		//run the sim immediately, if the child is not viable (v < 0), try a new child.
-		//sim(newCandidateIx(i));
-//		if(scoreCurrentGrid() < 0){
-//			i--;
-//		}	
+		tlocals.type_g = newCandidateIx(i);
+		sim(tlocals);
+		if(scoreCurrentGrid(tlocals) < 0){
+			i--;
+		}	
 	}
 	int parentOffset = genetic::POP_SIZE-genetic::TOP_PARENTS_RESERVED_SLOTS;
 	for(unsigned int i = parentOffset; i < genetic::POP_SIZE; i++){
@@ -166,22 +156,47 @@ std::unique_ptr<cell[]> geneticSolve() {
 	double timePerSim = getTimingInfo();
 	double numSims = genetic::POP_SIZE*genetic::NUM_GENERATIONS;
 	double simSeconds = timePerSim*numSims / 1000;
-	printf("genetic simulation expected to take %2.2f seconds", simSeconds);
+	printf("genetic simulation expected to take well over %2.2f seconds", simSeconds);
 	if (simSeconds > 300) {
 		printf(" (%2.0 minutes)", simSeconds / 60);
 	}
+	printf("\n");
 
+	cell type_g[GRID_SIZE];
+	adjacency_t adjacency_sg[GRID_SIZE*NUM_COMPONENT_TYPES];//this is a special one. so _gs instead of _g.
+	res_cell energy_g[GRID_SIZE];
+	res_cell heat_g[GRID_SIZE];
+	LocalVars locals_g[GRID_SIZE];
+	ResourceNetworkManager<res_cell> resNet;
 
-	seed();
+	function_args threadlocals;
+	threadlocals.thisCell = 0;
+	threadlocals.type_g = type_g;
+	threadlocals.adjacency_sg = adjacency_sg;
+	threadlocals.energy_g = energy_g;
+	threadlocals.heat_g = heat_g;
+	threadlocals.locals_g = locals_g;
+	threadlocals.resNet = resNet;
 
+	seed(threadlocals);
+	if (count_sims_low > ONE_BILLION) {
+		count_sims_low -= ONE_BILLION;
+		count_sims_high++;
+	}
+	printf("initial round seeded in %u iterations\n", count_sims_low);
 	for (int i = 0; i < genetic::NUM_GENERATIONS; i++) {
-		evaluate();
-		reproduce();
+		evaluate(threadlocals);
+		reproduce(threadlocals);
 		//count simulations
 		if (count_sims_low > ONE_BILLION) {
 			count_sims_low -= ONE_BILLION;
 			count_sims_high++;
 		}
+		auto tenPercent = genetic::NUM_GENERATIONS / 10;
+		if (i % tenPercent == tenPercent - 1) {
+			printf("%d%% complete\n", (i+1) * 10 / tenPercent);
+		}
+		
 	}
 	printf("total sims: %d,%03d,%03d,%03d\n",
 		count_sims_high,

@@ -5,7 +5,7 @@
 int setup_grid(function_args& tlocals) noexcept{
 	for(gsize_t i = 0; i < GRID_SIZE; i++){
 		tlocals.thisCell = i;
-		component_setup_arr[tlocals.typegrid[i]](tlocals);
+		component_setup_arr[tlocals.type_g[i]](tlocals);
 	}
 	return 0;
 }
@@ -14,7 +14,7 @@ int setup_grid(function_args& tlocals) noexcept{
 int run_grid(function_args& tlocals) noexcept{
 	for(gsize_t i = 0; i < GRID_SIZE; i++){
 		tlocals.thisCell = i;
-		component_action_arr[tlocals.typegrid[i]](tlocals);
+		component_action_arr[tlocals.type_g[i]](tlocals);
 	}
 	return 0;
 }
